@@ -1,0 +1,26 @@
+{
+    "python.analysis.extraPaths": [
+        "/home/main/circ_ws/build/circ_autonomy",
+        "/home/main/circ_ws/install/circ_autonomy/lib/python3.10/site-packages",
+        "/home/main/ros2_sablon_ws/build/temel_paket",
+        "/home/main/ros2_sablon_ws/install/temel_paket/lib/python3.10/site-packages",
+        "/home/main/real_rover_ws/build/rover_description",
+        "/home/main/real_rover_ws/install/rover_description/lib/python3.10/site-packages",
+        "/home/main/real_rover_ws/build/rover_bringup",
+        "/home/main/real_rover_ws/install/rover_bringup/lib/python3.10/site-packages",
+        "/home/main/real_rover_ws_gi/install/rover_kamera/lib/python3.10/site-packages",
+        "/home/main/real_rover_ws_gi/install/gesture_control/lib/python3.10/site-packages",
+        "/home/main/ros2_ws_tank/install/tank_bot_sim/lib/python3.10/site-packages",
+        "/home/main/ros2_ws_5/install/vision_pkg/lib/python3.10/site-packages",
+        "/home/main/ros2_ws_4/install/benim_ilk_paketim/lib/python3.10/site-packages",
+        "/home/main/ros2_ws_1/install/lidar_py_pkg/lib/python3.10/site-packages",
+        "/home/main/ros2_ws3/build/simple_py_pkg",
+        "/home/main/ros2_ws3/install/simple_py_pkg/lib/python3.10/site-packages",
+        "/home/main/ros2_ws3/install/simple_interfaces_pkg/local/lib/python3.10/dist-packages",
+        "/home/main/turtlesim_ws3/build/turtlesim_py_pkg",
+        "/home/main/turtlesim_ws3/install/turtlesim_py_pkg/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "ros.distro": "humble"
+}

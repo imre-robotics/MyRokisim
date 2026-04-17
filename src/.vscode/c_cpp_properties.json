@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/main/circ_ws/install/kinect2_bridge/include/**",
+        "/home/main/circ_ws/install/kinect2_registration/include/**",
+        "/home/main/turtlebot3_ws_1/install/turtlebot3_gazebo/include/**",
+        "/home/main/turtlebot3_ws_1/install/turtlebot3_fake_node/include/**",
+        "/home/main/ros2_ws3/install/simple_interfaces_pkg/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/main/rokisim_ws/src/rokisim_core/include/**",
+        "/home/main/rokisim_ws/src/rokisim_gazebo/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

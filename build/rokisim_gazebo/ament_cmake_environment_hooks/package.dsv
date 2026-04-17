@@ -1,0 +1,4 @@
+source;share/rokisim_gazebo/local_setup.bash
+source;share/rokisim_gazebo/local_setup.dsv
+source;share/rokisim_gazebo/local_setup.sh
+source;share/rokisim_gazebo/local_setup.zsh

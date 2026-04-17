@@ -1,0 +1,219 @@
+[0.236s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build']
+[0.237s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=False, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=12, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7a3dc9b99b10>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x7a3dc9b995d0>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x7a3dc9b995d0>>)
+[0.661s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.661s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.661s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.661s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.661s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.661s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.662s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/main/rokisim_ws'
+[0.662s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.662s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.662s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.662s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.662s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.662s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.663s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.663s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.663s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.680s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.681s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[0.682s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extensions ['ignore', 'ignore_ament_install']
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extension 'ignore'
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extension 'ignore_ament_install'
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extensions ['colcon_pkg']
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extension 'colcon_pkg'
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extensions ['colcon_meta']
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extension 'colcon_meta'
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extensions ['ros']
+[0.683s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_core) by extension 'ros'
+[0.687s] DEBUG:colcon.colcon_core.package_identification:Package 'src/rokisim_core' with type 'ros.ament_cmake' and name 'rokisim_core'
+[0.687s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extensions ['ignore', 'ignore_ament_install']
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extension 'ignore'
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extension 'ignore_ament_install'
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extensions ['colcon_pkg']
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extension 'colcon_pkg'
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extensions ['colcon_meta']
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extension 'colcon_meta'
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extensions ['ros']
+[0.688s] Level 1:colcon.colcon_core.package_identification:_identify(src/rokisim_gazebo) by extension 'ros'
+[0.689s] DEBUG:colcon.colcon_core.package_identification:Package 'src/rokisim_gazebo' with type 'ros.ament_cmake' and name 'rokisim_gazebo'
+[0.689s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.690s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.690s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.690s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.690s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.733s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[0.733s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[0.750s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 2 installed packages in /home/main/rokisim_ws/install
+[0.751s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ros2_cpp_ws/install
+[0.752s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 4 installed packages in /home/main/circ_ws/install
+[0.753s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ros2_sablon_ws/install
+[0.753s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 2 installed packages in /home/main/real_rover_ws_gi/install
+[0.754s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 0 installed packages in /home/main/ros2_ws/install
+[0.754s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ros2_ws_5/install
+[0.755s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ros2_ws_first/install
+[0.755s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ros2_ws_4/install
+[0.756s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/turtlesim_ws3/install
+[0.756s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 3 installed packages in /home/main/ros2_ws3/install
+[0.756s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 4 installed packages in /home/main/turtlebot3_ws_1/install
+[0.757s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 4 installed packages in /home/main/ros2_ws_1/install
+[0.757s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ros2_ws_p/install
+[0.758s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 2 installed packages in /home/main/real_rover_ws/install
+[0.758s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/minato_ws/install
+[0.758s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/rover_ws/install
+[0.759s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ros2_ws_tank/install
+[0.759s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 1 installed packages in /home/main/ika_ws/install
+[0.761s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 516 installed packages in /opt/ros/humble
+[0.764s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'cmake_args' from command line to 'None'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'cmake_target' from command line to 'None'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'cmake_clean_cache' from command line to 'False'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'cmake_clean_first' from command line to 'False'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'cmake_force_configure' from command line to 'False'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'ament_cmake_args' from command line to 'None'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'catkin_cmake_args' from command line to 'None'
+[0.866s] Level 5:colcon.colcon_core.verb:set package 'rokisim_core' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.866s] DEBUG:colcon.colcon_core.verb:Building package 'rokisim_core' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/main/rokisim_ws/build/rokisim_core', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/main/rokisim_ws/install/rokisim_core', 'merge_install': False, 'path': '/home/main/rokisim_ws/src/rokisim_core', 'symlink_install': False, 'test_result_base': None}
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'cmake_args' from command line to 'None'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'cmake_target' from command line to 'None'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'cmake_clean_cache' from command line to 'False'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'cmake_clean_first' from command line to 'False'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'cmake_force_configure' from command line to 'False'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'ament_cmake_args' from command line to 'None'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'catkin_cmake_args' from command line to 'None'
+[0.867s] Level 5:colcon.colcon_core.verb:set package 'rokisim_gazebo' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.867s] DEBUG:colcon.colcon_core.verb:Building package 'rokisim_gazebo' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/main/rokisim_ws/build/rokisim_gazebo', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/main/rokisim_ws/install/rokisim_gazebo', 'merge_install': False, 'path': '/home/main/rokisim_ws/src/rokisim_gazebo', 'symlink_install': False, 'test_result_base': None}
+[0.867s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.868s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.869s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/main/rokisim_ws/src/rokisim_core' with build type 'ament_cmake'
+[0.869s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/main/rokisim_ws/src/rokisim_core'
+[0.875s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.876s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.876s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.893s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/main/rokisim_ws/src/rokisim_gazebo' with build type 'ament_cmake'
+[0.894s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/main/rokisim_ws/src/rokisim_gazebo'
+[0.894s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.894s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.917s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/main/rokisim_ws/build/rokisim_core': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --build /home/main/rokisim_ws/build/rokisim_core -- -j12 -l12
+[0.927s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/main/rokisim_ws/build/rokisim_gazebo': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --build /home/main/rokisim_ws/build/rokisim_gazebo -- -j12 -l12
+[1.040s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/main/rokisim_ws/build/rokisim_core' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --build /home/main/rokisim_ws/build/rokisim_core -- -j12 -l12
+[1.065s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/main/rokisim_ws/build/rokisim_core': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --install /home/main/rokisim_ws/build/rokisim_core
+[1.068s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/main/rokisim_ws/build/rokisim_gazebo' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --build /home/main/rokisim_ws/build/rokisim_gazebo -- -j12 -l12
+[1.072s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/main/rokisim_ws/build/rokisim_gazebo': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --install /home/main/rokisim_ws/build/rokisim_gazebo
+[1.090s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(rokisim_core)
+[1.094s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/main/rokisim_ws/build/rokisim_core' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --install /home/main/rokisim_ws/build/rokisim_core
+[1.108s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core' for CMake module files
+[1.110s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core' for CMake config files
+[1.112s] Level 1:colcon.colcon_core.shell:create_environment_hook('rokisim_core', 'cmake_prefix_path')
+[1.112s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/hook/cmake_prefix_path.ps1'
+[1.114s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/hook/cmake_prefix_path.dsv'
+[1.115s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/hook/cmake_prefix_path.sh'
+[1.118s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/bin'
+[1.118s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/lib/pkgconfig/rokisim_core.pc'
+[1.119s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/lib/python3.10/site-packages'
+[1.119s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/bin'
+[1.120s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.ps1'
+[1.123s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.dsv'
+[1.125s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.sh'
+[1.127s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.bash'
+[1.131s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.zsh'
+[1.132s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/main/rokisim_ws/install/rokisim_core/share/colcon-core/packages/rokisim_core)
+[1.133s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(rokisim_core)
+[1.134s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core' for CMake module files
+[1.134s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core' for CMake config files
+[1.134s] Level 1:colcon.colcon_core.shell:create_environment_hook('rokisim_core', 'cmake_prefix_path')
+[1.135s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/hook/cmake_prefix_path.ps1'
+[1.136s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/hook/cmake_prefix_path.dsv'
+[1.136s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/hook/cmake_prefix_path.sh'
+[1.137s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/bin'
+[1.137s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/lib/pkgconfig/rokisim_core.pc'
+[1.137s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/lib/python3.10/site-packages'
+[1.138s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_core/bin'
+[1.138s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.ps1'
+[1.139s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.dsv'
+[1.140s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.sh'
+[1.140s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.bash'
+[1.141s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.zsh'
+[1.141s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/main/rokisim_ws/install/rokisim_core/share/colcon-core/packages/rokisim_core)
+[1.143s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(rokisim_gazebo)
+[1.143s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo' for CMake module files
+[1.145s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/main/rokisim_ws/build/rokisim_gazebo' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --install /home/main/rokisim_ws/build/rokisim_gazebo
+[1.145s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo' for CMake config files
+[1.146s] Level 1:colcon.colcon_core.shell:create_environment_hook('rokisim_gazebo', 'cmake_prefix_path')
+[1.147s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/hook/cmake_prefix_path.ps1'
+[1.148s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/hook/cmake_prefix_path.dsv'
+[1.148s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/hook/cmake_prefix_path.sh'
+[1.149s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/bin'
+[1.149s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/lib/pkgconfig/rokisim_gazebo.pc'
+[1.150s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/lib/python3.10/site-packages'
+[1.150s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/bin'
+[1.151s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.ps1'
+[1.152s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.dsv'
+[1.153s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.sh'
+[1.154s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.bash'
+[1.154s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.zsh'
+[1.155s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/main/rokisim_ws/install/rokisim_gazebo/share/colcon-core/packages/rokisim_gazebo)
+[1.156s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(rokisim_gazebo)
+[1.157s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo' for CMake module files
+[1.157s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo' for CMake config files
+[1.158s] Level 1:colcon.colcon_core.shell:create_environment_hook('rokisim_gazebo', 'cmake_prefix_path')
+[1.158s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/hook/cmake_prefix_path.ps1'
+[1.159s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/hook/cmake_prefix_path.dsv'
+[1.160s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/hook/cmake_prefix_path.sh'
+[1.161s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/bin'
+[1.161s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/lib/pkgconfig/rokisim_gazebo.pc'
+[1.162s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/lib/python3.10/site-packages'
+[1.162s] Level 1:colcon.colcon_core.environment:checking '/home/main/rokisim_ws/install/rokisim_gazebo/bin'
+[1.163s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.ps1'
+[1.165s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.dsv'
+[1.167s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.sh'
+[1.168s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.bash'
+[1.168s] INFO:colcon.colcon_core.shell:Creating package script '/home/main/rokisim_ws/install/rokisim_gazebo/share/rokisim_gazebo/package.zsh'
+[1.169s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/main/rokisim_ws/install/rokisim_gazebo/share/colcon-core/packages/rokisim_gazebo)
+[1.170s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[1.171s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[1.171s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[1.171s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[1.192s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[1.193s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[1.193s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[1.216s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[1.217s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/main/rokisim_ws/install/local_setup.ps1'
+[1.219s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/main/rokisim_ws/install/_local_setup_util_ps1.py'
+[1.221s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/main/rokisim_ws/install/setup.ps1'
+[1.226s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/main/rokisim_ws/install/local_setup.sh'
+[1.227s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/main/rokisim_ws/install/_local_setup_util_sh.py'
+[1.228s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/main/rokisim_ws/install/setup.sh'
+[1.234s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/main/rokisim_ws/install/local_setup.bash'
+[1.236s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/main/rokisim_ws/install/setup.bash'
+[1.239s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/main/rokisim_ws/install/local_setup.zsh'
+[1.241s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/main/rokisim_ws/install/setup.zsh'

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>RoKiSim 6.1 - Industrial Control Pendant</title>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<style>
+/* ENDÜSTRİYEL KARANLIK TEMA (DARK MODE) */
+body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; margin: 0; padding: 15px; color: #e0e0e0;}
+.header { background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%); color: #fff; padding: 15px 20px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e67e22; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+.status-badge { background-color: #c0392b; padding: 5px 12px; border-radius: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);}
+.main-container { display: flex; gap: 15px; height: 85vh;}
+.visual-column { flex: 5; display: flex; flex-direction: column; gap: 15px; min-height: 750px;}
+.view-panel { background: #1e1e1e; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; border: 1px solid #333; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);}
+.view-panel h3 { margin: 0 0 10px 0; font-size: 13px; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+/* Çevrimdışı Kamera Modu */
+.camera-feed { width: 100%; height: 350px; background: #050505; border-radius: 4px; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; border: 1px solid #444;}
+.cam-offline { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #e74c3c; font-family: 'Consolas', monospace; font-weight: bold; z-index: 1; text-align: center; background: repeating-linear-gradient(45deg, #111, #111 10px, #1a1a1a 10px, #1a1a1a 20px);}
+.cam-offline span { color: #7f8c8d; font-size: 11px; margin-top: 8px; letter-spacing: 1px;}
+.camera-feed img { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; z-index: 2; opacity: 0; transition: opacity 0.5s;}
+#canvas3d-container { width: 100%; height: 350px; background: #1a1a1a; border-radius: 4px; display: block; overflow: hidden; border: 1px solid #444;}
+#canvas3d-container canvas { width: 100% !important; height: 100% !important; display: block; }
+.controls-column { flex: 4; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px;}
+.panel { background: #1e1e1e; padding: 15px; border-radius: 6px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
+.panel h3 { margin-top: 0; padding-bottom: 5px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #ddd;}
+.data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Consolas', monospace; font-size: 13px;}
+.data-label { font-weight: bold; color: #888;}
+input[type=range] { width: 50%; accent-color: #e67e22; background: #333; height: 4px; border-radius: 2px; outline: none;}
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #e67e22; cursor: pointer; }
+input[type=number] { width: 60px; padding: 5px; background: #000; border: 1px solid #555; border-radius: 4px; font-family: 'Consolas', monospace; color: #00ff00; text-align: center;}
+.btn { background: linear-gradient(to bottom, #27ae60, #2ecc71); color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; width: 100%; border-radius: 4px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;}
+.btn:hover { background: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);}
+.math-box { background-color: #0a0a0a; border: 1px solid #333; padding: 10px; border-radius: 4px; font-family: 'Consolas', monospace; margin-top: 5px; font-size: 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+#cv-container { position: relative; width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; border: 1px solid #555;}
+#output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.8;}
+#cv_status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #f1c40f; padding: 4px 8px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 11px; border: 1px solid #f1c40f;}
+.switch-row { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: 'Consolas', monospace;}
+.joystick-wrapper { display: flex; justify-content: center; align-items: center; padding: 5px 0; }
+.joystick-zone { width: 100px; height: 100px; background: #111; border-radius: 50%; position: relative; border: 2px solid #555; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); touch-action: none;}
+.joystick-knob { width: 40px; height: 40px; background: radial-gradient(circle, #e67e22 0%, #d35400 100%); border-radius: 50%; position: absolute; left: 50%; top: 50%; margin-left: -20px; margin-top: -20px; cursor: grab; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #fff; transition: transform 0.1s ease;}
+.joystick-knob:active { cursor: grabbing; background: #e67e22;}
+#ik_status { text-align: center; font-family: 'Consolas', monospace; font-size: 12px; margin-top: 8px; min-height: 15px; color: #aaa;}
+/* Özel Panel Kenarlıkları */
+.panel-ai { border-top: 3px solid #9b59b6; }
+.panel-math { border-top: 3px solid #f1c40f; }
+.panel-ik { border-top: 3px solid #2ecc71; }
+.panel-joy { border-top: 3px solid #e74c3c; }
+.panel-jog { border-top: 3px solid #3498db; }
+.panel-grip { border-top: 3px solid #e67e22; }
+</style>
+</head>
+<body>
+<div class="header">
+<div>
+<span style="font-size: 20px; color: #e67e22;">RoKiSim 6.1</span>
+<span style="font-size: 14px; color: #aaa; margin-left: 10px;">| DESKTOP EDITION</span>
+</div>
+<span id="status" class="status-badge">SYS: OFFLINE</span>
+</div>
+
+<div class="main-container">
+<div class="visual-column">
+<div class="view-panel">
+<h3>[CAM-01] Gazebo Physics Engine</h3>
+<div class="camera-feed">
+<div class="cam-offline" id="cam-offline-layer">
+<div style="font-size: 18px;">[ NO VIDEO SIGNAL ]</div>
+<span>SIMULATION ENGINE UNREACHABLE</span>
+</div>
+<img id="gazebo-cam" src="http://localhost:8080/stream?topic=/kamera/kamera_sensor/image_raw&type=mjpeg&quality=80" alt="Gazebo Kamerası">
+</div>
+</div>
+<div class="view-panel">
+<h3>[SYS-01] 3D Digital Twin (Local Engine)</h3>
+<div id="canvas3d-container"></div>
+</div>
+</div>
+
+<div class="controls-column">
+<div class="panel panel-ai">
+<h3 style="color: #9b59b6;">[MOD-AI] Computer Vision</h3>
+<div id="cv-container">
+<div id="cv_status">AWAITING CAMERA...</div>
+<video id="input_video" style="display:none;"></video>
+<canvas id="output_canvas" width="400" height="200"></canvas>
+</div>
+<div class="switch-row">
+<span style="color: #ccc;">ENABLE AI OVERRIDE:</span>
+<label style="display: flex; align-items: center; cursor: pointer; color: #00ff00;">
+<input type="checkbox" id="ai_toggle" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #9b59b6;"> ON
+</label>
+</div>
+</div>
+
+<div class="panel panel-math">
+<h3 style="color: #f1c40f;">[DATA] Real-Time Telemetry</h3>
+<div class="math-box">
+<div style="display: flex; justify-content: space-between;">
+<div>
+<div id="math_x" style="color: #e67e22;">POS_X: 0.000</div>
+<div id="math_y" style="color: #27ae60;">POS_Y: 0.000</div>
+<div id="math_z" style="color: #3498db;">POS_Z: 0.000</div>
+</div>
+<div style="border-left: 1px solid #444; padding-left: 10px;">
+<div id="math_roll" style="color: #ccc;">ROLL : 0.00°</div>
+<div id="math_pitch" style="color: #ccc;">PITCH: 0.00°</div>
+<div id="math_yaw" style="color: #ccc;">YAW : 0.00°</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="panel panel-ik">
+<h3 style="color: #2ecc71;">[CMD] Inverse Kinematics</h3>
+<div class="data-row"><span class="data-label">TRG_X:</span><input type="number" id="tX" step="0.05" value="0.3"></div>
+<div class="data-row"><span class="data-label">TRG_Y:</span><input type="number" id="tY" step="0.05" value="0.2"></div>
+<div class="data-row"><span class="data-label">TRG_Z:</span><input type="number" id="tZ" step="0.05" value="0.4"></div>
+<button class="btn" onclick="solveIK()">EXECUTE JOG</button>
+<div id="ik_status">SYS: IDLE</div>
+</div>
+
+<div class="panel panel-joy">
+<h3 style="color: #e74c3c;">[CTRL] Analog Override</h3>
+<div class="joystick-wrapper">
+<div class="joystick-zone" id="joyZone"><div class="joystick-knob" id="joyKnob"></div></div>
+</div>
+</div>
+
+<div class="panel panel-jog">
+<h3 style="color: #3498db;">[JOG] Joint Diagnostics</h3>
+<div class="data-row"><span class="data-label">J1_BASE :</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j1_s"> <span id="v1" style="color:#fff">0.00°</span></div>
+<div class="data-row"><span class="data-label">J2_SHLDR:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j2_s"> <span id="v2" style="color:#fff">0.00°</span></div>
+<div class="data-row"><span class="data-label">J3_ELBOW:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j3_s"> <span id="v3" style="color:#fff">0.00°</span></div>
+<div class="data-row"><span class="data-label">J4_WRST1:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j4_s"> <span id="v4" style="color:#fff">0.00°</span></div>
+<div class="data-row"><span class="data-label">J5_WRST2:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j5_s"> <span id="v5" style="color:#fff">0.00°</span></div>
+<div class="data-row"><span class="data-label">J6_FLNGE:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j6_s"> <span id="v6" style="color:#fff">0.00°</span></div>
+</div>
+
+<div class="panel panel-grip">
+<h3 style="color: #e67e22;">[ACT] End Effector</h3>
+<div class="data-row"><span class="data-label">JAW_GAP :</span><input type="range" min="0.0" max="0.05" step="0.001" value="0.0" id="grip_s"><span id="grip_v" style="color: #e67e22;">0.00 mm</span></div>
+</div>
+<div class="panel" style="border-top: 3px solid #95a5a6;">
+<h3 style="color: #95a5a6;">[CAM] Orbit Control</h3>
+<div class="data-row"><span class="data-label">AZIMUTH :</span><input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="cam_slider"><span id="cam_val" style="color: #fff;">0.00°</span></div>
+</div>
+</div>
+</div>
+
+<script>
+let isRosConnected = false;
+var ros = new ROSLIB.Ros({ url : 'ws://localhost:9090' });
+ros.on('connection', function() { 
+isRosConnected = true;
+document.getElementById('status').innerHTML= 'SYS: ONLINE';
+document.getElementById('status').style.backgroundColor= '#27ae60';
+document.getElementById('status').style.color= '#000';
+});
+ros.on('error', function() { 
+isRosConnected = false;
+document.getElementById('status').innerHTML= 'SYS: LOCAL MODE';
+document.getElementById('status').style.backgroundColor= '#f39c12';
+document.getElementById('status').style.color= '#000';
+});
+ros.on('close', function() { 
+isRosConnected = false;
+document.getElementById('status').innerHTML= 'SYS: LOCAL MODE';
+document.getElementById('status').style.backgroundColor= '#f39c12';
+document.getElementById('status').style.color= '#000';
+});
+
+var jointTopic = new ROSLIB.Topic({ ros : ros, name : '/arm_controller/commands', messageType : 'std_msgs/Float64MultiArray' });
+var angles = { j1:0, j2:0, j3:0, j4:0, j5:0, j6:0, grip:0, cam:0 };
+
+// KAMERA ÇEVRİMDIŞI MODU (Sinyal Kesici)
+const gazeboCam = document.getElementById('gazebo-cam');
+const offlineLayer = document.getElementById('cam-offline-layer');
+if(gazeboCam && offlineLayer) {
+gazeboCam.onload = () => { gazeboCam.style.opacity = 1; offlineLayer.style.display = 'none'; };
+gazeboCam.onerror = () => { gazeboCam.style.opacity = 0; offlineLayer.style.display = 'flex'; };
+}
+
+// --- SENİN KUSURSUZ 3D KURULUMUN (GLOBAL SCOPE) ---
+THREE.Object3D.DefaultUp.set(0, 0, 1);
+
+const container = document.getElementById('canvas3d-container');
+const cW = container.getBoundingClientRect().width || 500;
+const cH = 350;
+
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a1a1a); 
+const camera3d = new THREE.PerspectiveCamera(45, cW / cH, 0.1, 100);
+camera3d.position.set(1.5, -1.5, 1.2); 
+const renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(cW, cH); container.appendChild(renderer.domElement);
+const orbitCtrl = new THREE.OrbitControls(camera3d, renderer.domElement);
+
+const grid = new THREE.GridHelper(2, 20, 0x444444, 0x222222);
+grid.rotation.x = Math.PI / 2;
+scene.add(grid);
+scene.add(new THREE.AxesHelper(0.5));
+
+const matGrey = new THREE.MeshPhongMaterial({color: 0x3a3a3a}); 
+const matOrange = new THREE.MeshPhongMaterial({color: 0xd35400});
+
+const robotBase = new THREE.Group(); scene.add(robotBase);
+const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05), matGrey); baseMesh.rotation.x = Math.PI / 2; baseMesh.position.z = 0.025; robotBase.add(baseMesh);
+
+const j1P = new THREE.Group(); j1P.position.set(0, 0, 0.05); robotBase.add(j1P);
+const l1M = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2), matOrange); l1M.rotation.x = Math.PI / 2; l1M.position.z = 0.1; j1P.add(l1M);
+
+const j2P = new THREE.Group(); j2P.position.set(0, 0, 0.2); j1P.add(j2P);
+const l2M = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4), matGrey); l2M.rotation.x = Math.PI / 2; l2M.position.z = 0.2; j2P.add(l2M);
+
+const j3P = new THREE.Group(); j3P.position.set(0, 0, 0.4); j2P.add(j3P);
+const l3M = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), matOrange); l3M.rotation.x = Math.PI / 2; l3M.position.z = 0.15; j3P.add(l3M);
+
+const j4P = new THREE.Group(); j4P.position.set(0, 0, 0.3); j3P.add(j4P);
+const l4M = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1), matGrey); l4M.rotation.x = Math.PI / 2; l4M.position.z = 0.05; j4P.add(l4M);
+
+const j5P = new THREE.Group(); j5P.position.set(0, 0, 0.1); j4P.add(j5P);
+const l5M = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1), matOrange); l5M.rotation.x = Math.PI / 2; l5M.position.z = 0.05; j5P.add(l5M);
+
+const j6P = new THREE.Group(); j6P.position.set(0, 0, 0.1); j5P.add(j6P);
+const l6M = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05), matGrey); l6M.rotation.x = Math.PI / 2; l6M.position.z = 0.025; j6P.add(l6M);
+
+const gripBase = new THREE.Group(); gripBase.position.set(0, 0, 0.05); j6P.add(gripBase);
+const gripM = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.06), matOrange); gripM.position.z = 0.03; gripBase.add(gripM);
+
+const light = new THREE.DirectionalLight(0xffffff, 1); light.position.set(5, 5, 10); scene.add(light);
+scene.add(new THREE.AmbientLight(0x404040));
+
+let currentEuler = new THREE.Euler();
+let currentQuat = new THREE.Quaternion();
+
+function getEndEffectorPos(tempA) {
+j1P.rotation.z = tempA.j1; 
+j2P.rotation.y = 1.5708 + tempA.j2; 
+j3P.rotation.y = tempA.j3; 
+j4P.rotation.x = tempA.j4; 
+j5P.rotation.y = tempA.j5; 
+j6P.rotation.z = tempA.j6;
+robotBase.updateMatrixWorld(true);
+let pos = new THREE.Vector3();
+gripBase.getWorldPosition(pos);
+return pos;
+}
+
+function solveIK() {
+let target = new THREE.Vector3(parseFloat(document.getElementById('tX').value), parseFloat(document.getElementById('tY').value), parseFloat(document.getElementById('tZ').value));
+if(target.length() > 0.95) { 
+document.getElementById('ik_status').innerText = "ERR: OUT OF REACH"; 
+document.getElementById('ik_status').style.color = "#e74c3c"; 
+return; 
+}
+document.getElementById('ik_status').innerText = "SYS: CALCULATING..."; 
+document.getElementById('ik_status').style.color = "#f1c40f";
+
+let tempAngles = { ...angles };
+let lr = 0.5; let delta = 0.01;
+for(let i=0; i<200; i++) {
+let p = getEndEffectorPos(tempAngles);
+let err = p.distanceTo(target);
+if(err < 0.005) break; 
+let grads = {}; let keys = ['j1','j2','j3','j4','j5','j6'];
+for(let k of keys) {
+let orig = tempAngles[k]; tempAngles[k] += delta;
+let newP = getEndEffectorPos(tempAngles);
+grads[k] = (newP.distanceTo(target) - err) / delta;
+tempAngles[k] = orig;
+}
+for(let k of keys) {
+tempAngles[k] -= lr * grads[k];
+tempAngles[k] = Math.max(-Math.PI, Math.min(Math.PI, tempAngles[k]));
+}
+}
+['j1','j2','j3','j4','j5','j6'].forEach((k, idx) => {
+angles[k] = tempAngles[k];
+document.getElementById(k+'_s').value = angles[k];
+document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
+});
+document.getElementById('ik_status').innerText = "SYS: TARGET REACHED"; document.getElementById('ik_status').style.color = "#2ecc71";
+}
+
+function animate3D() {
+requestAnimationFrame(animate3D);
+let currentP = getEndEffectorPos(angles);
+gripM.position.x = angles.grip; 
+gripBase.getWorldQuaternion(currentQuat);
+currentEuler.setFromQuaternion(currentQuat);
+
+orbitCtrl.update(); 
+renderer.render(scene, camera3d);
+
+document.getElementById('math_x').innerText = `POS_X: ${currentP.x.toFixed(3)}`;
+document.getElementById('math_y').innerText = `POS_Y: ${currentP.y.toFixed(3)}`;
+document.getElementById('math_z').innerText = `POS_Z: ${currentP.z.toFixed(3)}`;
+document.getElementById('math_roll').innerText = `ROLL : ${(currentEuler.x * 180/Math.PI).toFixed(1)}°`;
+document.getElementById('math_pitch').innerText = `PITCH: ${(currentEuler.y * 180/Math.PI).toFixed(1)}°`;
+document.getElementById('math_yaw').innerText = `YAW : ${(currentEuler.z * 180/Math.PI).toFixed(1)}°`;
+}
+// SENİN SİHRİN: Döngü anında tetikleniyor!
+animate3D(); 
+
+window.addEventListener('resize', () => { 
+let curW = container.getBoundingClientRect().width || 500;
+camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSize(curW, 350); 
+});
+
+// MEDIAPIPE AI ENTEGRASYONU
+const videoElement = document.getElementById('input_video');
+const canvasElement = document.getElementById('output_canvas');
+const canvasCtx = canvasElement.getContext('2d');
+const aiToggle = document.getElementById('ai_toggle');
+const statusText = document.getElementById('cv_status');
+
+function onResults(results) {
+canvasCtx.save();
+canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+statusText.innerText = "SYS: HAND TRACKING ACTIVE"; statusText.style.color = "#2ecc71";
+const landmarks = results.multiHandLandmarks[0];
+drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 3});
+
+if(aiToggle.checked) {
+let target_j1 = (0.5 - landmarks[0].x) * 3.14; 
+let target_j2 = (landmarks[0].y - 0.5) * 2.0;
+let target_j3 = (landmarks[8].y - landmarks[5].y) * 5.0; 
+let target_j4 = (landmarks[12].y - landmarks[9].y) * 5.0;
+let target_j5 = (landmarks[16].y - landmarks[13].y) * 5.0;
+let pinchDist = Math.hypot(landmarks[8].x - landmarks[4].x, landmarks[8].y - landmarks[4].y);
+let target_grip = (pinchDist - 0.05) * 0.3; 
+
+angles.j1 += (target_j1 - angles.j1) * 0.15;
+angles.j2 += (target_j2 - angles.j2) * 0.15;
+angles.j3 += (target_j3 - angles.j3) * 0.15;
+angles.j4 += (target_j4 - angles.j4) * 0.15;
+angles.j5 += (target_j5 - angles.j5) * 0.15;
+angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
+angles.j3 = Math.max(-2.5, Math.min(2.5, angles.j3));
+angles.grip = Math.max(0.0, Math.min(0.05, angles.grip + (target_grip - angles.grip) * 0.2));
+
+['j1','j2','j3','j4','j5'].forEach((k, idx) => {
+document.getElementById(k+'_s').value = angles[k];
+document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
+});
+document.getElementById('grip_s').value = angles.grip;
+document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
+}
+} else { statusText.innerText = "SYS: SCANNING FOR HAND..."; statusText.style.color = "#f1c40f"; }
+canvasCtx.restore();
+}
+
+const hands = new Hands({locateFile: (file) => { return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`; }});
+hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+hands.onResults(onResults);
+const camera = new Camera(videoElement, { onFrame: async () => { await hands.send({image: videoElement}); }, width: 400, height: 200 });
+camera.start();
+
+// ANALOG JOYSTICK MANTIĞI
+const joyZone = document.getElementById('joyZone'); const joyKnob = document.getElementById('joyKnob');
+let isDragging = false; let joyDX = 0, joyDY = 0;
+
+joyKnob.addEventListener('pointerdown', (e) => { isDragging = true; joyKnob.setPointerCapture(e.pointerId); joyKnob.style.transition = 'none'; });
+joyKnob.addEventListener('pointerup', (e) => { isDragging = false; joyKnob.releasePointerCapture(e.pointerId); joyKnob.style.transition = 'transform 0.1s ease'; joyKnob.style.transform = `translate(0px, 0px)`; joyDX = 0; joyDY = 0; });
+joyKnob.addEventListener('pointermove', (e) => {
+if(!isDragging) return;
+let rect = joyZone.getBoundingClientRect(); let x = e.clientX - (rect.left + rect.width/2); let y = e.clientY - (rect.top + rect.height/2);
+let dist = Math.sqrt(x*x + y*y); if(dist > 30) { x = (x/dist) * 30; y = (y/dist) * 30; }
+joyKnob.style.transform = `translate(${x}px, ${y}px)`; joyDX = x / 30; joyDY = y / 30; 
+});
+
+setInterval(() => {
+if(isDragging && !aiToggle.checked && (Math.abs(joyDX) > 0.05 || Math.abs(joyDY) > 0.05)) {
+let tX_el = document.getElementById('tX'); let tY_el = document.getElementById('tY');
+let target = new THREE.Vector3(parseFloat(tX_el.value) - joyDY * 0.005, parseFloat(tY_el.value) - joyDX * 0.005, parseFloat(document.getElementById('tZ').value));
+tX_el.value = target.x.toFixed(3); tY_el.value = target.y.toFixed(3);
+
+let err = getEndEffectorPos(angles).distanceTo(target);
+if(err > 0.001) {
+let grads = {}; let keys = ['j1','j2','j3','j4','j5','j6'];
+for(let k of keys) {
+let orig = angles[k]; angles[k] += 0.01;
+grads[k] = (getEndEffectorPos(angles).distanceTo(target) - err) / 0.01; angles[k] = orig;
+}
+for(let k of keys) {
+angles[k] -= 0.1 * grads[k]; 
+if(k==='j2') angles[k] = Math.max(-1.57, Math.min(1.57, angles[k]));
+else if(k==='j3') angles[k] = Math.max(-2.5, Math.min(2.5, angles[k]));
+else if(k==='j5') angles[k] = Math.max(-1.57, Math.min(1.57, angles[k]));
+else angles[k] = Math.max(-Math.PI, Math.min(Math.PI, angles[k]));
+}
+keys.forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
+}
+}
+}, 30);
+
+function bindSlider(id, val_id, key, multiplier, suffix) {
+document.getElementById(id).oninput = function() { 
+var aiCheckbox = document.getElementById('ai_toggle');
+if(aiCheckbox && aiCheckbox.checked && key !== 'j6' && key !== 'cam') return; // AI açıkken elle bozmayı engelle
+angles[key] = parseFloat(this.value); document.getElementById(val_id).innerText = (angles[key] * multiplier).toFixed(2) + suffix; 
+};
+}
+bindSlider('j1_s', 'v1', 'j1', 180/Math.PI, '°'); bindSlider('j2_s', 'v2', 'j2', 180/Math.PI, '°');
+bindSlider('j3_s', 'v3', 'j3', 180/Math.PI, '°'); bindSlider('j4_s', 'v4', 'j4', 180/Math.PI, '°');
+bindSlider('j5_s', 'v5', 'j5', 180/Math.PI, '°'); bindSlider('j6_s', 'v6', 'j6', 180/Math.PI, '°');
+bindSlider('grip_s', 'grip_v', 'grip', 1000, ' mm'); bindSlider('cam_slider', 'cam_val', 'cam', 180/Math.PI, '°');
+
+// ROS'A VERİ GÖNDERME (SADECE BAĞLIYSA GÖNDER)
+setInterval(function() {
+if(isRosConnected) {
+var msg = new ROSLIB.Message({ layout: { dim: [], data_offset: 0 }, data: [angles.j1, angles.j2, angles.j3, angles.j4, angles.j5, angles.j6, angles.grip, angles.cam] });
+jointTopic.publish(msg);
+}
+}, 50);
+</script>
+</body>
+</html>

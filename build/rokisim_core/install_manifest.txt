@@ -1,0 +1,15 @@
+/home/main/rokisim_ws/install/rokisim_core/share/ament_index/resource_index/package_run_dependencies/rokisim_core
+/home/main/rokisim_ws/install/rokisim_core/share/ament_index/resource_index/parent_prefix_path/rokisim_core
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/ament_prefix_path.sh
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/ament_prefix_path.dsv
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/path.sh
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/path.dsv
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.bash
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.sh
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.zsh
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.dsv
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.dsv
+/home/main/rokisim_ws/install/rokisim_core/share/ament_index/resource_index/packages/rokisim_core
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/cmake/rokisim_coreConfig.cmake
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/cmake/rokisim_coreConfig-version.cmake
+/home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.xml
