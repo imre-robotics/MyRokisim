@@ -92,6 +92,19 @@ input[type=number] { width: 60px; padding: 5px; background: #000; border: 1px so
 </div>
 <div class="switch-row">
 <span style="color: #ccc;">ENABLE AI OVERRIDE:</span>
+
+<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <span style="color: #ccc; font-size: 11px;">VOICE ASSIST:</span>
+                    <button id="mic_btn" style="background: #c0392b; color: white; border: 1px solid #e74c3c; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold;">🎙️ START MIC</button>
+                </div>
+                <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <span style="color: #ccc; font-size: 11px;">CMD OVERRIDE:</span>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="text" id="cmd_input" placeholder="Örn: küp" style="width: 120px; background: #050505; color: #00ff00; border: 1px solid #555; border-radius: 3px; padding: 5px; font-family: 'Consolas', monospace; text-transform: lowercase; outline: none;">
+                        <button id="cmd_btn" style="background: #2980b9; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold;">SEND</button>
+                    </div>
+                </div>
+
 <label style="display: flex; align-items: center; cursor: pointer; color: #00ff00;">
 <input type="checkbox" id="ai_toggle" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #9b59b6;"> ON
 </label>
@@ -143,14 +156,21 @@ input[type=number] { width: 60px; padding: 5px; background: #000; border: 1px so
 </div>
 
 <div class="panel panel-grip">
-<h3 style="color: #e67e22;">[ACT] End Effector</h3>
-<div class="data-row"><span class="data-label">JAW_GAP :</span><input type="range" min="0.0" max="0.05" step="0.001" value="0.0" id="grip_s"><span id="grip_v" style="color: #e67e22;">0.00 mm</span></div>
+    <h3 style="color: #e67e22;">[ACT] End Effector</h3>
+    <div class="data-row">
+        <span class="data-label">JAW_GAP :</span>
+        <input type="range" min="0.0" max="0.125" step="0.001" value="0.0" id="grip_s">
+        <span id="grip_v" style="color: #e67e22;">0.00 mm</span>
+    </div>
 </div>
+
 <div class="panel" style="border-top: 3px solid #95a5a6;">
-<h3 style="color: #95a5a6;">[CAM] Orbit Control</h3>
-<div class="data-row"><span class="data-label">AZIMUTH :</span><input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="cam_slider"><span id="cam_val" style="color: #fff;">0.00°</span></div>
-</div>
-</div>
+    <h3 style="color: #95a5a6;">[CAM] Orbit Control</h3>
+    <div class="data-row">
+        <span class="data-label">AZIMUTH :</span>
+        <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="cam_slider">
+        <span id="cam_val" style="color: #fff;">0.00°</span>
+    </div>
 </div>
 
 <script>
@@ -313,115 +333,249 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
 });
 
 // MEDIAPIPE AI ENTEGRASYONU
-const videoElement = document.getElementById('input_video');
-const canvasElement = document.getElementById('output_canvas');
-const canvasCtx = canvasElement.getContext('2d');
-const aiToggle = document.getElementById('ai_toggle');
-const statusText = document.getElementById('cv_status');
+        const videoElement = document.getElementById('input_video');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const aiToggle = document.getElementById('ai_toggle');
+        const statusText = document.getElementById('cv_status');
 
-function onResults(results) {
-canvasCtx.save();
-canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        const hands = new Hands({locateFile: (file) => { return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`; }});
+        // maxNumHands: 2 YAPILDI! Artık iki eli aynı anda okur.
+        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
 
-if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-statusText.innerText = "SYS: HAND TRACKING ACTIVE"; statusText.style.color = "#2ecc71";
-const landmarks = results.multiHandLandmarks[0];
-drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
-drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 3});
+        hands.onResults((results) => {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-if(aiToggle.checked) {
-let target_j1 = (0.5 - landmarks[0].x) * 3.14; 
-let target_j2 = (landmarks[0].y - 0.5) * 2.0;
-let target_j3 = (landmarks[8].y - landmarks[5].y) * 5.0; 
-let target_j4 = (landmarks[12].y - landmarks[9].y) * 5.0;
-let target_j5 = (landmarks[16].y - landmarks[13].y) * 5.0;
-let pinchDist = Math.hypot(landmarks[8].x - landmarks[4].x, landmarks[8].y - landmarks[4].y);
-let target_grip = (pinchDist - 0.05) * 0.3; 
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                statusText.innerText = "SYS: TRACKING " + results.multiHandLandmarks.length + " HAND(S)"; 
+                statusText.style.color = "#2ecc71";
+                
+                // Ekranda tespit edilen tüm ellerin iskeletini çiz
+                for(let i = 0; i < results.multiHandLandmarks.length; i++) {
+                    drawConnectors(canvasCtx, results.multiHandLandmarks[i], HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                    drawLandmarks(canvasCtx, results.multiHandLandmarks[i], {color: '#FF0000', lineWidth: 1, radius: 3});
+                }
 
-angles.j1 += (target_j1 - angles.j1) * 0.15;
-angles.j2 += (target_j2 - angles.j2) * 0.15;
-angles.j3 += (target_j3 - angles.j3) * 0.15;
-angles.j4 += (target_j4 - angles.j4) * 0.15;
-angles.j5 += (target_j5 - angles.j5) * 0.15;
-angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
-angles.j3 = Math.max(-2.5, Math.min(2.5, angles.j3));
-angles.grip = Math.max(0.0, Math.min(0.05, angles.grip + (target_grip - angles.grip) * 0.2));
+                if(aiToggle.checked) {
+                    for(let i = 0; i < results.multiHandLandmarks.length; i++) {
+                        const landmarks = results.multiHandLandmarks[i];
+                        // Kameranın ayna etkisinden dolayı MediaPipe 'Right' ve 'Left' etiketlerini ters verebilir.
+                        const handLabel = results.multiHandedness[i].label; 
 
-['j1','j2','j3','j4','j5'].forEach((k, idx) => {
-document.getElementById(k+'_s').value = angles[k];
-document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
-});
-document.getElementById('grip_s').value = angles.grip;
-document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
-}
-} else { statusText.innerText = "SYS: SCANNING FOR HAND..."; statusText.style.color = "#f1c40f"; }
-canvasCtx.restore();
-}
+                        // 1. SOL EL (ROBOTU SÜRER)
+                        if (handLabel === 'Left') {
+                            let target_j1 = (0.5 - landmarks[0].x) * 3.14; 
+                            let target_j2 = (landmarks[0].y - 0.5) * 2.0;
+                            let target_j3 = (landmarks[8].y - landmarks[5].y) * 5.0; 
+                            let target_j4 = (landmarks[12].y - landmarks[9].y) * 5.0;
+                            let target_j5 = (landmarks[16].y - landmarks[13].y) * 5.0;
 
-const hands = new Hands({locateFile: (file) => { return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`; }});
-hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
-hands.onResults(onResults);
-const camera = new Camera(videoElement, { onFrame: async () => { await hands.send({image: videoElement}); }, width: 400, height: 200 });
-camera.start();
+                            angles.j1 += (target_j1 - angles.j1) * 0.15; 
+                            angles.j2 += (target_j2 - angles.j2) * 0.15;
+                            angles.j3 += (target_j3 - angles.j3) * 0.15; 
+                            angles.j4 += (target_j4 - angles.j4) * 0.15; 
+                            angles.j5 += (target_j5 - angles.j5) * 0.15;
+                            
+                            angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2)); 
+                            angles.j3 = Math.max(-2.5, Math.min(2.5, angles.j3));
+                        }
 
-// ANALOG JOYSTICK MANTIĞI
-const joyZone = document.getElementById('joyZone'); const joyKnob = document.getElementById('joyKnob');
-let isDragging = false; let joyDX = 0, joyDY = 0;
+                        // 2. SAĞ EL (KISKACI AÇIP KAPATIR)
+                        if (handLabel === 'Right') {
+                            // Başparmak ucu (4) ile işaret parmağı ucu (8) arasındaki mesafeyi ölç
+                            let pinchDist = Math.hypot(landmarks[8].x - landmarks[4].x, landmarks[8].y - landmarks[4].y);
+                            
+                            let target_grip = 0.0;
+                            // Parmaklar bitişikse (mesafe darsa) kıskaç tamamen kapansın (0.125)
+                            if (pinchDist < 0.05) {
+                                target_grip = 0.125; 
+                            } 
+                            // Parmaklar açıksa kıskaç tamamen açılsın (0.0)
+                            else if (pinchDist > 0.15) {
+                                target_grip = 0.0;
+                            } 
+                            // Ara mesafelerde yumuşak kapanma hesabı
+                            else {
+                                target_grip = 0.125 - ((pinchDist - 0.05) / 0.10) * 0.125;
+                            }
 
-joyKnob.addEventListener('pointerdown', (e) => { isDragging = true; joyKnob.setPointerCapture(e.pointerId); joyKnob.style.transition = 'none'; });
-joyKnob.addEventListener('pointerup', (e) => { isDragging = false; joyKnob.releasePointerCapture(e.pointerId); joyKnob.style.transition = 'transform 0.1s ease'; joyKnob.style.transform = `translate(0px, 0px)`; joyDX = 0; joyDY = 0; });
-joyKnob.addEventListener('pointermove', (e) => {
-if(!isDragging) return;
-let rect = joyZone.getBoundingClientRect(); let x = e.clientX - (rect.left + rect.width/2); let y = e.clientY - (rect.top + rect.height/2);
-let dist = Math.sqrt(x*x + y*y); if(dist > 30) { x = (x/dist) * 30; y = (y/dist) * 30; }
-joyKnob.style.transform = `translate(${x}px, ${y}px)`; joyDX = x / 30; joyDY = y / 30; 
-});
+                            angles.grip += (target_grip - angles.grip) * 0.2;
+                            angles.grip = Math.max(0.0, Math.min(0.125, angles.grip));
+                        }
+                    }
 
-setInterval(() => {
-if(isDragging && !aiToggle.checked && (Math.abs(joyDX) > 0.05 || Math.abs(joyDY) > 0.05)) {
-let tX_el = document.getElementById('tX'); let tY_el = document.getElementById('tY');
-let target = new THREE.Vector3(parseFloat(tX_el.value) - joyDY * 0.005, parseFloat(tY_el.value) - joyDX * 0.005, parseFloat(document.getElementById('tZ').value));
-tX_el.value = target.x.toFixed(3); tY_el.value = target.y.toFixed(3);
+                    // Arayüzdeki sayıları ve çubukları güncelle
+                    ['j1','j2','j3','j4','j5'].forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
+                    document.getElementById('grip_s').value = angles.grip; document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
+                }
+            } else { 
+                statusText.innerText = "SYS: SCANNING FOR HANDS..."; 
+                statusText.style.color = "#f1c40f"; 
+            }
+            canvasCtx.restore();
+        });
 
-let err = getEndEffectorPos(angles).distanceTo(target);
-if(err > 0.001) {
-let grads = {}; let keys = ['j1','j2','j3','j4','j5','j6'];
-for(let k of keys) {
-let orig = angles[k]; angles[k] += 0.01;
-grads[k] = (getEndEffectorPos(angles).distanceTo(target) - err) / 0.01; angles[k] = orig;
-}
-for(let k of keys) {
-angles[k] -= 0.1 * grads[k]; 
-if(k==='j2') angles[k] = Math.max(-1.57, Math.min(1.57, angles[k]));
-else if(k==='j3') angles[k] = Math.max(-2.5, Math.min(2.5, angles[k]));
-else if(k==='j5') angles[k] = Math.max(-1.57, Math.min(1.57, angles[k]));
-else angles[k] = Math.max(-Math.PI, Math.min(Math.PI, angles[k]));
-}
-keys.forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
-}
-}
-}, 30);
+        const camera = new Camera(videoElement, { onFrame: async () => { await hands.send({image: videoElement}); }, width: 400, height: 200 });
+        camera.start();
 
-function bindSlider(id, val_id, key, multiplier, suffix) {
-document.getElementById(id).oninput = function() { 
-var aiCheckbox = document.getElementById('ai_toggle');
-if(aiCheckbox && aiCheckbox.checked && key !== 'j6' && key !== 'cam') return; // AI açıkken elle bozmayı engelle
-angles[key] = parseFloat(this.value); document.getElementById(val_id).innerText = (angles[key] * multiplier).toFixed(2) + suffix; 
-};
-}
-bindSlider('j1_s', 'v1', 'j1', 180/Math.PI, '°'); bindSlider('j2_s', 'v2', 'j2', 180/Math.PI, '°');
-bindSlider('j3_s', 'v3', 'j3', 180/Math.PI, '°'); bindSlider('j4_s', 'v4', 'j4', 180/Math.PI, '°');
-bindSlider('j5_s', 'v5', 'j5', 180/Math.PI, '°'); bindSlider('j6_s', 'v6', 'j6', 180/Math.PI, '°');
-bindSlider('grip_s', 'grip_v', 'grip', 1000, ' mm'); bindSlider('cam_slider', 'cam_val', 'cam', 180/Math.PI, '°');
+        // ANALOG JOYSTICK MANTIĞI
+        const joyZone = document.getElementById('joyZone'); const joyKnob = document.getElementById('joyKnob');
+        let isDragging = false; let joyDX = 0, joyDY = 0;
 
-// ROS'A VERİ GÖNDERME (SADECE BAĞLIYSA GÖNDER)
-setInterval(function() {
-if(isRosConnected) {
-var msg = new ROSLIB.Message({ layout: { dim: [], data_offset: 0 }, data: [angles.j1, angles.j2, angles.j3, angles.j4, angles.j5, angles.j6, angles.grip, angles.cam] });
-jointTopic.publish(msg);
-}
-}, 50);
-</script>
+        joyKnob.addEventListener('pointerdown', (e) => { isDragging = true; joyKnob.setPointerCapture(e.pointerId); joyKnob.style.transition = 'none'; });
+        joyKnob.addEventListener('pointerup', (e) => { isDragging = false; joyKnob.releasePointerCapture(e.pointerId); joyKnob.style.transition = 'transform 0.1s ease'; joyKnob.style.transform = `translate(0px, 0px)`; joyDX = 0; joyDY = 0; });
+        joyKnob.addEventListener('pointermove', (e) => {
+            if(!isDragging) return;
+            let rect = joyZone.getBoundingClientRect(); let x = e.clientX - (rect.left + rect.width/2); let y = e.clientY - (rect.top + rect.height/2);
+            let dist = Math.sqrt(x*x + y*y); if(dist > 30) { x = (x/dist) * 30; y = (y/dist) * 30; }
+            joyKnob.style.transform = `translate(${x}px, ${y}px)`; joyDX = x / 30; joyDY = y / 30; 
+        });
+
+        setInterval(() => {
+            if(isDragging && !aiToggle.checked && (Math.abs(joyDX) > 0.05 || Math.abs(joyDY) > 0.05)) {
+                let tX_el = document.getElementById('tX'); let tY_el = document.getElementById('tY');
+                let target = new THREE.Vector3(parseFloat(tX_el.value) - joyDY * 0.005, parseFloat(tY_el.value) - joyDX * 0.005, parseFloat(document.getElementById('tZ').value));
+                tX_el.value = target.x.toFixed(3); tY_el.value = target.y.toFixed(3);
+
+                let err = getEndEffectorPos(angles).distanceTo(target);
+                if(err > 0.001) {
+                    let grads = {}; let keys = ['j1','j2','j3','j4','j5','j6'];
+                    for(let k of keys) {
+                        let orig = angles[k]; angles[k] += 0.01;
+                        grads[k] = (getEndEffectorPos(angles).distanceTo(target) - err) / 0.01; angles[k] = orig;
+                    }
+                    for(let k of keys) {
+                        angles[k] -= 0.1 * grads[k]; 
+                        if(k==='j2') angles[k] = Math.max(-1.57, Math.min(1.57, angles[k]));
+                        else if(k==='j3') angles[k] = Math.max(-2.5, Math.min(2.5, angles[k]));
+                        else if(k==='j5') angles[k] = Math.max(-1.57, Math.min(1.57, angles[k]));
+                        else angles[k] = Math.max(-Math.PI, Math.min(Math.PI, angles[k]));
+                    }
+                    keys.forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
+                }
+            }
+        }, 30);
+
+        function bindSlider(id, val_id, key, multiplier, suffix) {
+            document.getElementById(id).oninput = function() { 
+                var aiCheckbox = document.getElementById('ai_toggle');
+                if(aiCheckbox && aiCheckbox.checked && key !== 'j6' && key !== 'cam') return; // AI açıkken elle bozmayı engelle
+                angles[key] = parseFloat(this.value); document.getElementById(val_id).innerText = (angles[key] * multiplier).toFixed(2) + suffix; 
+            };
+        }
+        bindSlider('j1_s', 'v1', 'j1', 180/Math.PI, '°'); bindSlider('j2_s', 'v2', 'j2', 180/Math.PI, '°');
+        bindSlider('j3_s', 'v3', 'j3', 180/Math.PI, '°'); bindSlider('j4_s', 'v4', 'j4', 180/Math.PI, '°');
+        bindSlider('j5_s', 'v5', 'j5', 180/Math.PI, '°'); bindSlider('j6_s', 'v6', 'j6', 180/Math.PI, '°');
+        bindSlider('grip_s', 'grip_v', 'grip', 1000, ' mm'); bindSlider('cam_slider', 'cam_val', 'cam', 180/Math.PI, '°');
+
+        // ROS'A VERİ GÖNDERME (SADECE BAĞLIYSA GÖNDER)
+        setInterval(function() {
+            if(isRosConnected) {
+                var msg = new ROSLIB.Message({ layout: { dim: [], data_offset: 0 }, data: [angles.j1, angles.j2, angles.j3, angles.j4, angles.j5, angles.j6, angles.grip, angles.cam] });
+                jointTopic.publish(msg);
+            }
+        }, 50);
+
+        // =========================================================
+        // [MOD-HYBRID] OTONOM SESLİ ASİSTAN + YAZILI TERMİNAL
+        // =========================================================
+        const micBtn = document.getElementById('mic_btn');
+        const cmdBtn = document.getElementById('cmd_btn');
+        const cmdInput = document.getElementById('cmd_input');
+
+        // Ortak Uzaysal Hafıza (İki sistem de buraya bakar)
+        const memoryMap = {
+            "küp": new THREE.Vector3(0.5, 0.4, 0.1),
+            "daire": new THREE.Vector3(0.5, -0.4, 0.1),
+            "silindir": new THREE.Vector3(0.0, 0.6, 0.1),
+            "koni": new THREE.Vector3(0.0, -0.6, 0.1)
+        };
+
+        // Ortak Hedefe Yönelme Fonksiyonu
+        function lockOnTarget(commandText, isVoice = false) {
+            if(!commandText) return;
+
+            statusText.innerText = (isVoice ? "🎙️ DUYULDU: " : "⌨️ KOMUT: ") + commandText.toUpperCase();
+            statusText.style.color = "#3498db";
+
+            let targetFound = false;
+
+            for (const [objectName, targetCoords] of Object.entries(memoryMap)) {
+                if (commandText.includes(objectName)) {
+                    statusText.innerText = "🚀 HEDEF: " + objectName.toUpperCase();
+                    statusText.style.color = "#e67e22";
+                    
+                    document.getElementById('tX').value = targetCoords.x.toFixed(3);
+                    document.getElementById('tY').value = targetCoords.y.toFixed(3);
+                    document.getElementById('tZ').value = targetCoords.z.toFixed(3);
+                    
+                    document.getElementById('ai_toggle').checked = false; // El kontrolünü kapat
+                    solveIK(); // Ters Kinematiği çalıştır
+                    targetFound = true;
+                    break;
+                }
+            }
+
+            if(!targetFound) {
+                statusText.innerText = "❌ BİLİNMEYEN HEDEF";
+                statusText.style.color = "#e74c3c";
+            }
+        }
+
+        // --- 1. TERMİNAL (YAZILI) KONTROLÜ ---
+        function executeCommand() {
+            lockOnTarget(cmdInput.value.trim().toLowerCase(), false);
+            cmdInput.value = ""; 
+        }
+        cmdBtn.addEventListener('click', executeCommand);
+        cmdInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') executeCommand();
+        });
+
+        // --- 2. SES (VOICE) KONTROLÜ ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'tr-TR'; 
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            micBtn.addEventListener('click', () => {
+                recognition.start();
+                micBtn.style.background = "#2ecc71";
+                micBtn.style.borderColor = "#27ae60";
+                micBtn.innerText = "🎧 DİNLİYOR...";
+            });
+
+            recognition.onresult = (event) => {
+                const command = event.results[0][0].transcript.trim().toLowerCase();
+                
+                micBtn.style.background = "#c0392b";
+                micBtn.style.borderColor = "#e74c3c";
+                micBtn.innerText = "🎙️ START MIC";
+                
+                lockOnTarget(command, true); // Sesli komutu ortak fonksiyona gönder
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+                micBtn.style.background = "#c0392b";
+                micBtn.style.borderColor = "#e74c3c";
+                micBtn.innerText = "🎙️ START MIC";
+            };
+
+            recognition.onerror = (event) => {
+                console.log("Ses Hatası: ", event.error);
+                micBtn.style.background = "#c0392b";
+                micBtn.innerText = "❌ HATA: " + event.error;
+            };
+        } else {
+            micBtn.innerText = "❌ DESTEKLENMİYOR";
+            micBtn.disabled = true;
+        }
+        // =========================================================
+    </script>
 </body>
 </html>
