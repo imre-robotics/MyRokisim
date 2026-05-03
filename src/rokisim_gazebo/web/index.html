@@ -493,15 +493,100 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
             "koni": new THREE.Vector3(0.0, -0.6, 0.1)
         };
 
-        // Ortak Hedefe Yönelme Fonksiyonu
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Ortak Hedefe Yönelme ve NLP (Doğal Dil İşleme) Fonksiyonu
         function lockOnTarget(commandText, isVoice = false) {
             if(!commandText) return;
 
             statusText.innerText = (isVoice ? "🎙️ DUYULDU: " : "⌨️ KOMUT: ") + commandText.toUpperCase();
             statusText.style.color = "#3498db";
 
-            let targetFound = false;
+            let commandProcessed = false;
 
+            // =======================================================
+            // 1. KISKAÇ (UÇ İŞLEVCİ) KONTROL KOMUTLARI (GELİŞMİŞ TOLERANS)
+            // =======================================================
+            // Ses asistanının kelimeleri yanlış anlama ihtimaline karşı kelime dağarcığını genişlettik
+            if (commandText.match(/uç|üç|işlevci|işlemci|kıskaç|el|tutucu|kavrama/)) {
+                
+                if (commandText.match(/aç|bırak|sal/)) {
+                    angles.grip = 0.0;
+                    statusText.innerText = "🛠️ UÇ İŞLEVCİ: AÇILDI";
+                    commandProcessed = true;
+                } 
+                else if (commandText.match(/kapat|tut|sık|al/)) {
+                    angles.grip = 0.125; // 125mm tam kapalı hali
+                    statusText.innerText = "🛠️ UÇ İŞLEVCİ: KAPATILDI";
+                    commandProcessed = true;
+                }
+                
+                if(commandProcessed) {
+                    document.getElementById('grip_s').value = angles.grip;
+                    document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
+                    return; // Komut işlendi, döngüden çık
+                }
+            }
+
+            // =======================================================
+            // 2. PARAMETRİK DERECE VE YÖN KOMUTLARI (JOINT KONTROLÜ)
+            // =======================================================
+            // Cümlenin içinden rakamı ve "derece" kelimesini yakalar
+            const dereceMatch = commandText.match(/(\d+)\s*derece/); 
+            if (dereceMatch) {
+                let derece = parseInt(dereceMatch[1]);
+                let radyan = derece * (Math.PI / 180); // ROS 2 motorları radyan okur
+
+                if (commandText.includes("sağ")) {
+                    angles.j1 -= radyan; 
+                    statusText.innerText = `🔄 TABAN: SAĞA ${derece}°`;
+                    commandProcessed = true;
+                } else if (commandText.includes("sol")) {
+                    angles.j1 += radyan; 
+                    statusText.innerText = `🔄 TABAN: SOLA ${derece}°`;
+                    commandProcessed = true;
+                } else if (commandText.includes("yukarı")) {
+                    angles.j2 -= radyan; 
+                    statusText.innerText = `🔄 GÖVDE: YUKARI ${derece}°`;
+                    commandProcessed = true;
+                } else if (commandText.includes("aşağı")) {
+                    angles.j2 += radyan; 
+                    statusText.innerText = `🔄 GÖVDE: AŞAĞI ${derece}°`;
+                    commandProcessed = true;
+                }
+
+                if (commandProcessed) {
+                    // Robotun fiziksel limitlerini aşmasını engelle
+                    angles.j1 = Math.max(-Math.PI, Math.min(Math.PI, angles.j1));
+                    angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
+
+                    // Arayüzdeki sürgüleri ve derece yazılarını güncelle
+                    document.getElementById('j1_s').value = angles.j1;
+                    document.getElementById('v1').innerText = (angles.j1 * 180/Math.PI).toFixed(2) + '°';
+                    document.getElementById('j2_s').value = angles.j2;
+                    document.getElementById('v2').innerText = (angles.j2 * 180/Math.PI).toFixed(2) + '°';
+                    
+                    document.getElementById('ai_toggle').checked = false; // El kontrolü ile çakışmasını önle
+                    return; // Komut işlendi, döngüden çık
+                }
+            }
+
+            // =======================================================
+            // 3. UZAYSAL HAFIZA KOMUTLARI (TERS KİNEMATİK - IK)
+            // =======================================================
             for (const [objectName, targetCoords] of Object.entries(memoryMap)) {
                 if (commandText.includes(objectName)) {
                     statusText.innerText = "🚀 HEDEF: " + objectName.toUpperCase();
@@ -511,18 +596,39 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                     document.getElementById('tY').value = targetCoords.y.toFixed(3);
                     document.getElementById('tZ').value = targetCoords.z.toFixed(3);
                     
-                    document.getElementById('ai_toggle').checked = false; // El kontrolünü kapat
-                    solveIK(); // Ters Kinematiği çalıştır
-                    targetFound = true;
+                    document.getElementById('ai_toggle').checked = false; 
+                    solveIK(); // Ters Kinematiği tetikle
+                    commandProcessed = true;
                     break;
                 }
             }
 
-            if(!targetFound) {
-                statusText.innerText = "❌ BİLİNMEYEN HEDEF";
+            // Hiçbir kategoriye girmediyse hata ver
+            if(!commandProcessed) {
+                statusText.innerText = "❌ KOMUT ANLAŞILAMADI";
                 statusText.style.color = "#e74c3c";
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // --- 1. TERMİNAL (YAZILI) KONTROLÜ ---
         function executeCommand() {
