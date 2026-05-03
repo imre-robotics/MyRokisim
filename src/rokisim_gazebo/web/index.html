@@ -271,40 +271,82 @@ gripBase.getWorldPosition(pos);
 return pos;
 }
 
-function solveIK() {
-let target = new THREE.Vector3(parseFloat(document.getElementById('tX').value), parseFloat(document.getElementById('tY').value), parseFloat(document.getElementById('tZ').value));
-if(target.length() > 0.95) { 
-document.getElementById('ik_status').innerText = "ERR: OUT OF REACH"; 
-document.getElementById('ik_status').style.color = "#e74c3c"; 
-return; 
-}
-document.getElementById('ik_status').innerText = "SYS: CALCULATING..."; 
-document.getElementById('ik_status').style.color = "#f1c40f";
 
-let tempAngles = { ...angles };
-let lr = 0.5; let delta = 0.01;
-for(let i=0; i<200; i++) {
-let p = getEndEffectorPos(tempAngles);
-let err = p.distanceTo(target);
-if(err < 0.005) break; 
-let grads = {}; let keys = ['j1','j2','j3','j4','j5','j6'];
-for(let k of keys) {
-let orig = tempAngles[k]; tempAngles[k] += delta;
-let newP = getEndEffectorPos(tempAngles);
-grads[k] = (newP.distanceTo(target) - err) / delta;
-tempAngles[k] = orig;
-}
-for(let k of keys) {
-tempAngles[k] -= lr * grads[k];
-tempAngles[k] = Math.max(-Math.PI, Math.min(Math.PI, tempAngles[k]));
-}
-}
-['j1','j2','j3','j4','j5','j6'].forEach((k, idx) => {
-angles[k] = tempAngles[k];
-document.getElementById(k+'_s').value = angles[k];
-document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
-});
-document.getElementById('ik_status').innerText = "SYS: TARGET REACHED"; document.getElementById('ik_status').style.color = "#2ecc71";
+
+
+
+
+
+function solveIK() {
+    let target = new THREE.Vector3(
+        parseFloat(document.getElementById('tX').value), 
+        parseFloat(document.getElementById('tY').value), 
+        parseFloat(document.getElementById('tZ').value)
+    );
+    
+    // ==========================================
+    // ERİŞİM MESAFESİ KONTROLÜ VE SESLİ HATA
+    // ==========================================
+    if(target.length() > 0.95) { 
+        document.getElementById('ik_status').innerText = "ERR: OUT OF REACH"; 
+        document.getElementById('ik_status').style.color = "#e74c3c"; 
+        
+        // J.A.R.V.I.S. İNGİLİZCE HATA BİLDİRİMİ
+        speakStatus("Error. Coordinates are out of physical reach limits."); 
+        return; 
+    }
+    
+    document.getElementById('ik_status').innerText = "SYS: CALCULATING..."; 
+    document.getElementById('ik_status').style.color = "#f1c40f";
+
+    let tempAngles = { ...angles };
+    let lr = 0.5; 
+    let delta = 0.01;
+    
+    // Gradient Descent (Ters Kinematik Hesaplama Döngüsü)
+    for(let i=0; i<200; i++) {
+        let p = getEndEffectorPos(tempAngles);
+        let err = p.distanceTo(target);
+        if(err < 0.005) break; 
+        
+        let grads = {}; 
+        let keys = ['j1','j2','j3','j4','j5','j6'];
+        
+        for(let k of keys) {
+            let orig = tempAngles[k]; 
+            tempAngles[k] += delta;
+            let newP = getEndEffectorPos(tempAngles);
+            grads[k] = (newP.distanceTo(target) - err) / delta;
+            tempAngles[k] = orig;
+        }
+        
+        for(let k of keys) {
+            tempAngles[k] -= lr * grads[k];
+            
+            // FİZİKSEL ÇARPIŞMA VE AÇI LİMİTLERİ
+            if (k === 'j1') {
+                tempAngles.j1 = Math.max(-2.8, Math.min(2.8, tempAngles.j1)); // Taban: ±160°
+            } else if (k === 'j2') {
+                tempAngles.j2 = Math.max(-1.57, Math.min(1.57, tempAngles.j2)); // Omuz: ±90°
+            } else if (k === 'j3') {
+                tempAngles.j3 = Math.max(-2.45, Math.min(2.45, tempAngles.j3)); // Dirsek: ±140°
+            } else if (k === 'j5') {
+                tempAngles.j5 = Math.max(-1.57, Math.min(1.57, tempAngles.j5)); // Bilek: ±90°
+            } else {
+                tempAngles[k] = Math.max(-Math.PI, Math.min(Math.PI, tempAngles[k])); // j4 ve j6 için 360° serbest
+            }
+        }
+    }
+
+    // Hesaplanan güvenli açıları robota ve arayüze uygula
+    ['j1','j2','j3','j4','j5','j6'].forEach((k, idx) => {
+        angles[k] = tempAngles[k];
+        document.getElementById(k+'_s').value = angles[k];
+        document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
+    });
+    
+    document.getElementById('ik_status').innerText = "SYS: TARGET REACHED"; 
+    document.getElementById('ik_status').style.color = "#2ecc71";
 }
 
 function animate3D() {
@@ -478,6 +520,77 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
             }
         }, 50);
 
+
+
+
+
+
+
+
+
+
+
+
+
+        // =========================================================
+        // [MOD-JARVIS] SESLİ GERİ BİLDİRİM MOTORU (İNGİLİZCE ERKEK SESİ)
+        // =========================================================
+        const synth = window.speechSynthesis;
+        let voiceReady = false;
+
+        function speakStatus(text) {
+            if (synth.speaking) {
+                synth.cancel(); 
+            }
+            if (text !== '') {
+                const utterThis = new SpeechSynthesisUtterance(text);
+                
+                // Sistemdeki sesleri çek ve İngilizce erkek sesi ara
+                const voices = synth.getVoices();
+                let selectedVoice = voices.find(voice => 
+                    voice.name.includes('Google UK English Male') || 
+                    voice.name.includes('David') || 
+                    voice.name.includes('Mark') ||
+                    (voice.lang.startsWith('en-') && voice.name.includes('Male'))
+                );
+
+                // Eğer özel bir erkek sesi bulamazsa, bulduğu ilk İngilizce sesi al
+                if (!selectedVoice) {
+                    selectedVoice = voices.find(voice => voice.lang.startsWith('en-'));
+                }
+                
+                if (selectedVoice) {
+                    utterThis.voice = selectedVoice;
+                }
+                
+                // J.A.R.V.I.S. tonunu yakalamak için kalınlaştırma (pitch) ayarı
+                utterThis.pitch = 0.4; // Sesi daha tok ve mekanik yapar
+                utterThis.rate = 1.0;  // Konuşma hızı
+                
+                synth.speak(utterThis);
+            }
+        }
+
+        // Tarayıcı sesleri yüklediğinde sisteme İngilizce giriş anonsu yap
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => {
+                if (!voiceReady) {
+                    setTimeout(() => {
+                        speakStatus("System online. Welcome, Mustafa Ali Imre. Autonomous control activated.");
+                    }, 1000);
+                    voiceReady = true;
+                }
+            };
+        }
+        // =========================================================
+
+
+
+
+
+
+
+
         // =========================================================
         // [MOD-HYBRID] OTONOM SESLİ ASİSTAN + YAZILI TERMİNAL
         // =========================================================
@@ -518,19 +631,20 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
             let commandProcessed = false;
 
             // =======================================================
-            // 1. KISKAÇ (UÇ İŞLEVCİ) KONTROL KOMUTLARI (GELİŞMİŞ TOLERANS)
+            // 1. KISKAÇ (UÇ İŞLEVCİ) KONTROL KOMUTLARI (SESLİ BİLDİRİM EKLENDİ)
             // =======================================================
-            // Ses asistanının kelimeleri yanlış anlama ihtimaline karşı kelime dağarcığını genişlettik
             if (commandText.match(/uç|üç|işlevci|işlemci|kıskaç|el|tutucu|kavrama/)) {
                 
                 if (commandText.match(/aç|bırak|sal/)) {
                     angles.grip = 0.0;
                     statusText.innerText = "🛠️ UÇ İŞLEVCİ: AÇILDI";
+                    speakStatus("End effector opened."); // J.A.R.V.I.S. KONUŞUYOR
                     commandProcessed = true;
                 } 
                 else if (commandText.match(/kapat|tut|sık|al/)) {
                     angles.grip = 0.125; // 125mm tam kapalı hali
                     statusText.innerText = "🛠️ UÇ İŞLEVCİ: KAPATILDI";
+                    speakStatus("End effector closed."); // J.A.R.V.I.S. KONUŞUYOR
                     commandProcessed = true;
                 }
                 
@@ -542,55 +656,58 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
             }
 
             // =======================================================
-            // 2. PARAMETRİK DERECE VE YÖN KOMUTLARI (JOINT KONTROLÜ)
+            // 2. PARAMETRİK DERECE VE YÖN KOMUTLARI (SESLİ BİLDİRİM EKLENDİ)
             // =======================================================
-            // Cümlenin içinden rakamı ve "derece" kelimesini yakalar
             const dereceMatch = commandText.match(/(\d+)\s*derece/); 
             if (dereceMatch) {
                 let derece = parseInt(dereceMatch[1]);
-                let radyan = derece * (Math.PI / 180); // ROS 2 motorları radyan okur
+                let radyan = derece * (Math.PI / 180);
 
                 if (commandText.includes("sağ")) {
                     angles.j1 -= radyan; 
                     statusText.innerText = `🔄 TABAN: SAĞA ${derece}°`;
+                    speakStatus(`Base turning right by ${derece} degrees.`); // J.A.R.V.I.S.
                     commandProcessed = true;
                 } else if (commandText.includes("sol")) {
                     angles.j1 += radyan; 
                     statusText.innerText = `🔄 TABAN: SOLA ${derece}°`;
+                    speakStatus(`Base turning left by ${derece} degrees.`); // J.A.R.V.I.S.
                     commandProcessed = true;
                 } else if (commandText.includes("yukarı")) {
                     angles.j2 -= radyan; 
                     statusText.innerText = `🔄 GÖVDE: YUKARI ${derece}°`;
+                    speakStatus(`Shoulder pitching up by ${derece} degrees.`); // J.A.R.V.I.S.
                     commandProcessed = true;
                 } else if (commandText.includes("aşağı")) {
                     angles.j2 += radyan; 
                     statusText.innerText = `🔄 GÖVDE: AŞAĞI ${derece}°`;
+                    speakStatus(`Shoulder pitching down by ${derece} degrees.`); // J.A.R.V.I.S.
                     commandProcessed = true;
                 }
 
                 if (commandProcessed) {
-                    // Robotun fiziksel limitlerini aşmasını engelle
                     angles.j1 = Math.max(-Math.PI, Math.min(Math.PI, angles.j1));
                     angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
 
-                    // Arayüzdeki sürgüleri ve derece yazılarını güncelle
                     document.getElementById('j1_s').value = angles.j1;
                     document.getElementById('v1').innerText = (angles.j1 * 180/Math.PI).toFixed(2) + '°';
                     document.getElementById('j2_s').value = angles.j2;
                     document.getElementById('v2').innerText = (angles.j2 * 180/Math.PI).toFixed(2) + '°';
                     
-                    document.getElementById('ai_toggle').checked = false; // El kontrolü ile çakışmasını önle
-                    return; // Komut işlendi, döngüden çık
+                    document.getElementById('ai_toggle').checked = false; 
+                    return; 
                 }
             }
 
             // =======================================================
-            // 3. UZAYSAL HAFIZA KOMUTLARI (TERS KİNEMATİK - IK)
+            // 3. UZAYSAL HAFIZA KOMUTLARI (IK) (SESLİ BİLDİRİM EKLENDİ)
             // =======================================================
             for (const [objectName, targetCoords] of Object.entries(memoryMap)) {
                 if (commandText.includes(objectName)) {
                     statusText.innerText = "🚀 HEDEF: " + objectName.toUpperCase();
                     statusText.style.color = "#e67e22";
+                    
+                    speakStatus(`${objectName} hedefine yöneliyorum.`); // J.A.R.V.I.S.
                     
                     document.getElementById('tX').value = targetCoords.x.toFixed(3);
                     document.getElementById('tY').value = targetCoords.y.toFixed(3);
@@ -603,13 +720,15 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 }
             }
 
-            // Hiçbir kategoriye girmediyse hata ver
+            // =======================================================
+            // 4. BİLİNMEYEN KOMUT (SESLİ HATA BİLDİRİMİ)
+            // =======================================================
             if(!commandProcessed) {
                 statusText.innerText = "❌ KOMUT ANLAŞILAMADI";
                 statusText.style.color = "#e74c3c";
+                speakStatus("Command not recognized. Please repeat."); // J.A.R.V.I.S.
             }
         }
-
 
 
 
