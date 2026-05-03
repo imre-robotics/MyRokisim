@@ -599,7 +599,7 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
 
 
         // =========================================================
-        // [MOD-TEACH] ÖĞRET VE TEKRARLA MOTORU (PLC LOOP)
+        // [MOD-TEACH] ÖĞRET VE TEKRARLA + HAYALET YÖRÜNGE MOTORU
         // =========================================================
         const recBtn = document.getElementById('rec_btn');
         const playBtn = document.getElementById('play_btn');
@@ -611,28 +611,52 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
         let playTimer = null;
         let playIndex = 0;
 
+        // --- 🟢 HAYALET YÖRÜNGE (NEON ÇİZGİ) KURULUMU ---
+        const ghostMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2, transparent: true, opacity: 0.8 }); // Neon Turkuaz
+        let ghostGeometry = new THREE.BufferGeometry();
+        let ghostLine = new THREE.Line(ghostGeometry, ghostMaterial);
+        scene.add(ghostLine); // Çizgiyi 3D sahneye ekle
+        let ghostPoints = [];
+
         recBtn.addEventListener('click', () => {
             if (isPlaying) return; // Oynatırken kaydetmeyi engelle
             
             if (!isRecording) {
                 // Kayda Başla
                 isRecording = true;
-                recordedPath = []; // Eski kaydı temizle
+                recordedPath = []; 
+                ghostPoints = [];  
+                
+                // ESKİ ÇİZGİYİ SAHNEDEN TAMAMEN SİL
+                scene.remove(ghostLine);
+                if(ghostGeometry) ghostGeometry.dispose();
                 
                 recBtn.innerText = "⏹️ STOP REC";
-                recBtn.style.background = "#8e44ad"; // Kayıt anında mor renk
+                recBtn.style.background = "#8e44ad"; 
                 
-                speakStatus("Recording trajectory."); // J.A.R.V.I.S.
+                speakStatus("Recording trajectory."); 
                 statusText.innerText = "🔴 SYS: RECORDING...";
                 statusText.style.color = "#e74c3c";
                 
-                // Saniyede 10 kez mevcut açıları diziye kaydet
+                // Saniyede 10 kez mevcut açıları ve 3D uç konumunu kaydet
                 recordTimer = setInterval(() => {
+                    // 1. Motor Açılarını Kaydet
                     recordedPath.push({
                         j1: angles.j1, j2: angles.j2, j3: angles.j3,
                         j4: angles.j4, j5: angles.j5, j6: angles.j6,
                         grip: angles.grip
                     });
+
+                    // 2. Hayalet Çizgiyi Dinamik Olarak Yeniden Çiz
+                    let currentPos = getEndEffectorPos(angles);
+                    ghostPoints.push(new THREE.Vector3(currentPos.x, currentPos.y, currentPos.z));
+                    
+                    // KRİTİK DÜZELTME: Çizgiyi her adımda GPU'ya yeniden tanımla
+                    scene.remove(ghostLine);
+                    ghostGeometry = new THREE.BufferGeometry().setFromPoints(ghostPoints);
+                    ghostLine = new THREE.Line(ghostGeometry, ghostMaterial);
+                    scene.add(ghostLine);
+
                 }, 100);
             } else {
                 // Kaydı Bitir
@@ -642,7 +666,7 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 recBtn.innerText = "🔴 REC";
                 recBtn.style.background = "#c0392b";
                 
-                speakStatus(`Trajectory saved. ${recordedPath.length} frames recorded.`); // J.A.R.V.I.S.
+                speakStatus(`Trajectory saved. ${recordedPath.length} frames recorded.`); 
                 statusText.innerText = `⏹️ SYS: SAVED (${recordedPath.length} FRAMES)`;
                 statusText.style.color = "#f1c40f";
             }
@@ -660,28 +684,28 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 playIndex = 0;
                 
                 playBtn.innerText = "⏸️ STOP PLAY";
-                playBtn.style.background = "#f39c12"; // Oynatırken turuncu
+                playBtn.style.background = "#f39c12"; 
                 
-                speakStatus("Executing autonomous playback."); // J.A.R.V.I.S.
+                speakStatus("Executing autonomous playback."); 
                 statusText.innerText = "▶️ SYS: PLAYING...";
                 statusText.style.color = "#27ae60";
                 
-                document.getElementById('ai_toggle').checked = false; // El kontrolünü kapat ki rotayı bozmasın
+                document.getElementById('ai_toggle').checked = false; // El kontrolünü kapat
                 
                 // Saniyede 10 kez sıradaki kareyi robota uygula
                 playTimer = setInterval(() => {
                     if (playIndex >= recordedPath.length) {
-                        playIndex = 0; // Rotanın sonuna gelirse başa sar (Sonsuz Loop)
+                        playIndex = 0; // Başa sar (Sonsuz Döngü)
                     }
                     
                     let frame = recordedPath[playIndex];
                     
-                    // Açıları sisteme aktar
+                    // Açıları robota aktar
                     angles.j1 = frame.j1; angles.j2 = frame.j2; angles.j3 = frame.j3;
                     angles.j4 = frame.j4; angles.j5 = frame.j5; angles.j6 = frame.j6;
                     angles.grip = frame.grip;
                     
-                    // Arayüzdeki slider ve rakamları güncelle
+                    // Arayüzü güncelle
                     let keys = ['j1','j2','j3','j4','j5','j6'];
                     keys.forEach((k, idx) => {
                         document.getElementById(k+'_s').value = angles[k];
@@ -700,17 +724,12 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 playBtn.innerText = "▶️ PLAY";
                 playBtn.style.background = "#27ae60";
                 
-                speakStatus("Playback stopped."); // J.A.R.V.I.S.
+                speakStatus("Playback stopped."); 
                 statusText.innerText = "⏸️ SYS: PLAY STOPPED";
                 statusText.style.color = "#f1c40f";
             }
         });
         // =========================================================
-
-
-
-
-
 
 
 
