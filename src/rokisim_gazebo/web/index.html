@@ -862,6 +862,8 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 }
             }
 
+            
+
             // =======================================================
             // 4. BİLİNMEYEN KOMUT (SESLİ HATA BİLDİRİMİ)
             // =======================================================
@@ -881,7 +883,65 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
 
 
 
+        // =========================================================
+        // [MOD-SAFETY] ENDÜSTRİYEL GÜVENLİK VE LİMİT KONTROLÖRÜ (SAFETY PLC)
+        // =========================================================
+        let isSafetyLockActive = false;
 
+        setInterval(() => {
+            let limitBreached = false;
+            let breachedJoint = "";
+
+            // Omuz Eklemi (J2) Güvenlik Sınırı: -90° ile +90° arası (-1.57, 1.57 radyan)
+            if (angles.j2 > 1.57) { angles.j2 = 1.57; limitBreached = true; breachedJoint = "Shoulder"; }
+            if (angles.j2 < -1.57) { angles.j2 = -1.57; limitBreached = true; breachedJoint = "Shoulder"; }
+
+            // Dirsek Eklemi (J3) Güvenlik Sınırı: -140° ile +140° arası (-2.45, 2.45 radyan)
+            if (angles.j3 > 2.45) { angles.j3 = 2.45; limitBreached = true; breachedJoint = "Elbow"; }
+            if (angles.j3 < -2.45) { angles.j3 = -2.45; limitBreached = true; breachedJoint = "Elbow"; }
+
+            // Taban (J1) Güvenlik Sınırı: Kablo kopmasını önlemek için ±160° (-2.8, 2.8 radyan)
+            if (angles.j1 > 2.8) { angles.j1 = 2.8; limitBreached = true; breachedJoint = "Base"; }
+            if (angles.j1 < -2.8) { angles.j1 = -2.8; limitBreached = true; breachedJoint = "Base"; }
+
+            // Bilek (J5) Güvenlik Sınırı: ±90°
+            if (angles.j5 > 1.57) { angles.j5 = 1.57; limitBreached = true; breachedJoint = "Wrist"; }
+            if (angles.j5 < -1.57) { angles.j5 = -1.57; limitBreached = true; breachedJoint = "Wrist"; }
+
+            // EĞER LİMİT AŞILDIYSA (ACİL DURUM PROTOKOLÜ)
+            if (limitBreached) {
+                // Arayüzdeki slider'ları güvenli limite geri çek
+                let keys = ['j1','j2','j3','j4','j5','j6'];
+                keys.forEach((k, idx) => {
+                    document.getElementById(k+'_s').value = angles[k];
+                    document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
+                });
+
+                // Spama düşmemek için sadece ilk ihlal anında uyarı ver
+                if (!isSafetyLockActive) {
+                    isSafetyLockActive = true;
+                    
+                    // Otonom hareketleri (AI ve Play) acil durdurma
+                    document.getElementById('ai_toggle').checked = false;
+                    if (typeof isPlaying !== 'undefined' && isPlaying) {
+                        document.getElementById('play_btn').click(); // Oynatmayı durdur
+                    }
+
+                    // Arayüzü Kırmızıya Boya ve Uyarı Ver
+                    statusText.innerText = `🚨 E-STOP: ${breachedJoint.toUpperCase()} LIMIT BREACH!`;
+                    statusText.style.color = "#c0392b";
+                    speakStatus(`Warning. Critical limit breached at ${breachedJoint} joint. Emergency stop activated.`);
+                    
+                    // 3 Saniye sonra güvenlik kilidini normale döndür
+                    setTimeout(() => {
+                        isSafetyLockActive = false;
+                        statusText.innerText = "✅ SYS: SAFETY LOCK CLEARED";
+                        statusText.style.color = "#27ae60";
+                    }, 3000);
+                }
+            }
+        }, 100); // Saniyede 10 kez denetle
+        // =========================================================
 
 
 
