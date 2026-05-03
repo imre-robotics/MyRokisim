@@ -173,6 +173,14 @@ input[type=number] { width: 60px; padding: 5px; background: #000; border: 1px so
     </div>
 </div>
 
+<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <span style="color: #ccc; font-size: 11px;">TEACH PENDANT:</span>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="rec_btn" style="background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 50%;">🔴 REC</button>
+                        <button id="play_btn" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 50%;">▶️ PLAY</button>
+                    </div>
+                </div>
+
 <script>
 let isRosConnected = false;
 var ros = new ROSLIB.Ros({ url : 'ws://localhost:9090' });
@@ -582,6 +590,121 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 }
             };
         }
+        // =========================================================
+
+
+
+
+
+
+
+        // =========================================================
+        // [MOD-TEACH] ÖĞRET VE TEKRARLA MOTORU (PLC LOOP)
+        // =========================================================
+        const recBtn = document.getElementById('rec_btn');
+        const playBtn = document.getElementById('play_btn');
+        
+        let recordedPath = [];
+        let isRecording = false;
+        let isPlaying = false;
+        let recordTimer = null;
+        let playTimer = null;
+        let playIndex = 0;
+
+        recBtn.addEventListener('click', () => {
+            if (isPlaying) return; // Oynatırken kaydetmeyi engelle
+            
+            if (!isRecording) {
+                // Kayda Başla
+                isRecording = true;
+                recordedPath = []; // Eski kaydı temizle
+                
+                recBtn.innerText = "⏹️ STOP REC";
+                recBtn.style.background = "#8e44ad"; // Kayıt anında mor renk
+                
+                speakStatus("Recording trajectory."); // J.A.R.V.I.S.
+                statusText.innerText = "🔴 SYS: RECORDING...";
+                statusText.style.color = "#e74c3c";
+                
+                // Saniyede 10 kez mevcut açıları diziye kaydet
+                recordTimer = setInterval(() => {
+                    recordedPath.push({
+                        j1: angles.j1, j2: angles.j2, j3: angles.j3,
+                        j4: angles.j4, j5: angles.j5, j6: angles.j6,
+                        grip: angles.grip
+                    });
+                }, 100);
+            } else {
+                // Kaydı Bitir
+                isRecording = false;
+                clearInterval(recordTimer);
+                
+                recBtn.innerText = "🔴 REC";
+                recBtn.style.background = "#c0392b";
+                
+                speakStatus(`Trajectory saved. ${recordedPath.length} frames recorded.`); // J.A.R.V.I.S.
+                statusText.innerText = `⏹️ SYS: SAVED (${recordedPath.length} FRAMES)`;
+                statusText.style.color = "#f1c40f";
+            }
+        });
+
+        playBtn.addEventListener('click', () => {
+            if (isRecording || recordedPath.length === 0) {
+                if(recordedPath.length === 0) speakStatus("Error. No trajectory in memory.");
+                return;
+            }
+            
+            if (!isPlaying) {
+                // Oynatmaya Başla
+                isPlaying = true;
+                playIndex = 0;
+                
+                playBtn.innerText = "⏸️ STOP PLAY";
+                playBtn.style.background = "#f39c12"; // Oynatırken turuncu
+                
+                speakStatus("Executing autonomous playback."); // J.A.R.V.I.S.
+                statusText.innerText = "▶️ SYS: PLAYING...";
+                statusText.style.color = "#27ae60";
+                
+                document.getElementById('ai_toggle').checked = false; // El kontrolünü kapat ki rotayı bozmasın
+                
+                // Saniyede 10 kez sıradaki kareyi robota uygula
+                playTimer = setInterval(() => {
+                    if (playIndex >= recordedPath.length) {
+                        playIndex = 0; // Rotanın sonuna gelirse başa sar (Sonsuz Loop)
+                    }
+                    
+                    let frame = recordedPath[playIndex];
+                    
+                    // Açıları sisteme aktar
+                    angles.j1 = frame.j1; angles.j2 = frame.j2; angles.j3 = frame.j3;
+                    angles.j4 = frame.j4; angles.j5 = frame.j5; angles.j6 = frame.j6;
+                    angles.grip = frame.grip;
+                    
+                    // Arayüzdeki slider ve rakamları güncelle
+                    let keys = ['j1','j2','j3','j4','j5','j6'];
+                    keys.forEach((k, idx) => {
+                        document.getElementById(k+'_s').value = angles[k];
+                        document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
+                    });
+                    document.getElementById('grip_s').value = angles.grip;
+                    document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
+                    
+                    playIndex++;
+                }, 100);
+            } else {
+                // Oynatmayı Durdur
+                isPlaying = false;
+                clearInterval(playTimer);
+                
+                playBtn.innerText = "▶️ PLAY";
+                playBtn.style.background = "#27ae60";
+                
+                speakStatus("Playback stopped."); // J.A.R.V.I.S.
+                statusText.innerText = "⏸️ SYS: PLAY STOPPED";
+                statusText.style.color = "#f1c40f";
+            }
+        });
         // =========================================================
 
 
