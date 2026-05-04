@@ -173,6 +173,12 @@ input[type=number] { width: 60px; padding: 5px; background: #000; border: 1px so
     </div>
 </div>
 
+<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #444;">
+                    <button id="workspace_btn" style="background: #2980b9; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
+                        🌐 WORKSPACE GÖSTER
+                    </button>
+                </div>
+
 <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
                     <span style="color: #ccc; font-size: 11px;">TEACH PENDANT:</span>
                     <div style="display: flex; gap: 5px;">
@@ -943,6 +949,62 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
         }, 100); // Saniyede 10 kez denetle
         // =========================================================
 
+
+
+        // =========================================================
+        // [MOD-WORKSPACE] 3B ERİŞİM KÜRESİ GÖRSELLEŞTİRİCİ (DÜZELTİLMİŞ YARIM KÜRE)
+        // =========================================================
+        const workspaceBtn = document.getElementById('workspace_btn');
+
+        // Yarıçapı tam olarak IK motorumuzun limiti olan 0.95 metre yapıyoruz
+        // Üst yarım küreyi varsayılan Y-yukarı eksenine göre kesiyoruz.
+        // thetaStart: 0 (Kuzey Kutbu = +Y), thetaLength: Math.PI / 2 (Ekvator = XZ Düzlemi)
+        const wsGeometry = new THREE.SphereGeometry(0.95, 32, 24, 0, Math.PI * 2, 0, Math.PI / 2); 
+        
+        // Profesyonel endüstriyel tel kafes (Wireframe) materyali
+        const wsMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x3498db, // Teknolojik Mavi
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.15 
+        });
+
+        const workspaceSphere = new THREE.Mesh(wsGeometry, wsMaterial);
+        
+        // Kürenin merkezini robotun tabanına sabitliyoruz
+        workspaceSphere.position.set(0, 0, 0); 
+        workspaceSphere.visible = false; // Başlangıçta gizli
+
+        // --- KRİTİK DÜZELTME: ROS/MÜHENDİSLİK Z-YUKARI EKSENİNE HİZALAMA ---
+        // Üst yarım küre varsayılan Y-yukarı eksenine bakar.
+        // Robotumuz Z-yukarı'ya hizalanmışsa (ROS standardı), küreyi X ekseni etrafında -90 derece döndürerek Z-yukarı'ya hizalamalıyız.
+        workspaceSphere.rotation.x = Math.PI / 2; 
+
+        scene.add(workspaceSphere);
+
+        let isWorkspaceVisible = false;
+
+        workspaceBtn.addEventListener('click', () => {
+            isWorkspaceVisible = !isWorkspaceVisible;
+            workspaceSphere.visible = isWorkspaceVisible;
+            
+            if (isWorkspaceVisible) {
+                workspaceBtn.innerText = "🌐 WORKSPACE GİZLE";
+                workspaceBtn.style.background = "#e67e22"; // Turuncu uyarı rengi
+                
+                speakStatus("Workspace boundary visualization activated."); // J.A.R.V.I.S.
+                statusText.innerText = "🌐 SYS: WORKSPACE VISIBLE";
+                statusText.style.color = "#3498db";
+            } else {
+                workspaceBtn.innerText = "🌐 WORKSPACE GÖSTER";
+                workspaceBtn.style.background = "#2980b9";
+                
+                speakStatus("Workspace boundary visualization deactivated."); // J.A.R.V.I.S.
+                statusText.innerText = "🌐 SYS: WORKSPACE HIDDEN";
+                statusText.style.color = "#bdc3c7";
+            }
+        });
+        // =========================================================
 
 
 
