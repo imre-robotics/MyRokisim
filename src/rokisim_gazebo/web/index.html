@@ -1,400 +1,580 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8" />
-<title>RoKiSim 6.1 - Industrial Control Pendant</title>
-<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-<style>
-/* ENDÜSTRİYEL KARANLIK TEMA (DARK MODE) */
-body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; margin: 0; padding: 15px; color: #e0e0e0;}
-.header { background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%); color: #fff; padding: 15px 20px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e67e22; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
-.status-badge { background-color: #c0392b; padding: 5px 12px; border-radius: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);}
-.main-container { display: flex; gap: 15px; height: 85vh;}
-.visual-column { flex: 5; display: flex; flex-direction: column; gap: 15px; min-height: 750px;}
-.view-panel { background: #1e1e1e; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; border: 1px solid #333; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);}
-.view-panel h3 { margin: 0 0 10px 0; font-size: 13px; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
-/* Çevrimdışı Kamera Modu */
-.camera-feed { width: 100%; height: 350px; background: #050505; border-radius: 4px; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; border: 1px solid #444;}
-.cam-offline { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #e74c3c; font-family: 'Consolas', monospace; font-weight: bold; z-index: 1; text-align: center; background: repeating-linear-gradient(45deg, #111, #111 10px, #1a1a1a 10px, #1a1a1a 20px);}
-.cam-offline span { color: #7f8c8d; font-size: 11px; margin-top: 8px; letter-spacing: 1px;}
-.camera-feed img { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; z-index: 2; opacity: 0; transition: opacity 0.5s;}
-#canvas3d-container { width: 100%; height: 350px; background: #1a1a1a; border-radius: 4px; display: block; overflow: hidden; border: 1px solid #444;}
-#canvas3d-container canvas { width: 100% !important; height: 100% !important; display: block; }
-.controls-column { flex: 4; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px;}
-.panel { background: #1e1e1e; padding: 15px; border-radius: 6px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
-.panel h3 { margin-top: 0; padding-bottom: 5px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #ddd;}
-.data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Consolas', monospace; font-size: 13px;}
-.data-label { font-weight: bold; color: #888;}
-input[type=range] { width: 50%; accent-color: #e67e22; background: #333; height: 4px; border-radius: 2px; outline: none;}
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #e67e22; cursor: pointer; }
-input[type=number] { width: 60px; padding: 5px; background: #000; border: 1px solid #555; border-radius: 4px; font-family: 'Consolas', monospace; color: #00ff00; text-align: center;}
-.btn { background: linear-gradient(to bottom, #27ae60, #2ecc71); color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; width: 100%; border-radius: 4px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;}
-.btn:hover { background: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);}
-.math-box { background-color: #0a0a0a; border: 1px solid #333; padding: 10px; border-radius: 4px; font-family: 'Consolas', monospace; margin-top: 5px; font-size: 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
-#cv-container { position: relative; width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; border: 1px solid #555;}
-#output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.8;}
-#cv_status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #f1c40f; padding: 4px 8px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 11px; border: 1px solid #f1c40f;}
-.switch-row { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: 'Consolas', monospace;}
-.joystick-wrapper { display: flex; justify-content: center; align-items: center; padding: 5px 0; }
-.joystick-zone { width: 100px; height: 100px; background: #111; border-radius: 50%; position: relative; border: 2px solid #555; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); touch-action: none;}
-.joystick-knob { width: 40px; height: 40px; background: radial-gradient(circle, #e67e22 0%, #d35400 100%); border-radius: 50%; position: absolute; left: 50%; top: 50%; margin-left: -20px; margin-top: -20px; cursor: grab; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #fff; transition: transform 0.1s ease;}
-.joystick-knob:active { cursor: grabbing; background: #e67e22;}
-#ik_status { text-align: center; font-family: 'Consolas', monospace; font-size: 12px; margin-top: 8px; min-height: 15px; color: #aaa;}
-/* Özel Panel Kenarlıkları */
-.panel-ai { border-top: 3px solid #9b59b6; }
-.panel-math { border-top: 3px solid #f1c40f; }
-.panel-ik { border-top: 3px solid #2ecc71; }
-.panel-joy { border-top: 3px solid #e74c3c; }
-.panel-jog { border-top: 3px solid #3498db; }
-.panel-grip { border-top: 3px solid #e67e22; }
-</style>
+    <meta charset="utf-8" />
+    <title>RoKiSim 6.1 - Industrial Control Pendant</title>
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <style>
+        /* ENDÜSTRİYEL KARANLIK TEMA (DARK MODE) */
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; margin: 0; padding: 15px; color: #e0e0e0;}
+        .header { background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%); color: #fff; padding: 15px 20px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e67e22; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+        .status-badge { background-color: #c0392b; padding: 5px 12px; border-radius: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; box-shadow: inset 0 0 5px rgba(0,0,0,0.5);}
+        .main-container { display: flex; gap: 15px; height: 85vh;}
+        .visual-column { flex: 5; display: flex; flex-direction: column; gap: 15px; min-height: 750px;}
+        .view-panel { background: #1e1e1e; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; border: 1px solid #333; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);}
+        .view-panel h3 { margin: 0 0 10px 0; font-size: 13px; color: #aaa; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+        .camera-feed { width: 100%; height: 350px; background: #050505; border-radius: 4px; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; border: 1px solid #444;}
+        .cam-offline { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #e74c3c; font-family: 'Consolas', monospace; font-weight: bold; z-index: 1; text-align: center; background: repeating-linear-gradient(45deg, #111, #111 10px, #1a1a1a 10px, #1a1a1a 20px);}
+        .cam-offline span { color: #7f8c8d; font-size: 11px; margin-top: 8px; letter-spacing: 1px;}
+        .camera-feed img { width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0; z-index: 2; opacity: 0; transition: opacity 0.5s;}
+        #canvas3d-container { width: 100%; height: 350px; background: #1a1a1a; border-radius: 4px; display: block; overflow: hidden; border: 1px solid #444;}
+        #canvas3d-container canvas { width: 100% !important; height: 100% !important; display: block; }
+        .controls-column { flex: 4; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px;}
+        .panel { background: #1e1e1e; padding: 15px; border-radius: 6px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
+        .panel h3 { margin-top: 0; padding-bottom: 5px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #ddd;}
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Consolas', monospace; font-size: 13px;}
+        .data-label { font-weight: bold; color: #888;}
+        input[type=range] { width: 50%; accent-color: #e67e22; background: #333; height: 4px; border-radius: 2px; outline: none;}
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #e67e22; cursor: pointer; }
+        input[type=number] { width: 60px; padding: 5px; background: #000; border: 1px solid #555; border-radius: 4px; font-family: 'Consolas', monospace; color: #00ff00; text-align: center;}
+        .btn { background: linear-gradient(to bottom, #27ae60, #2ecc71); color: #000; border: none; padding: 10px; cursor: pointer; font-weight: bold; width: 100%; border-radius: 4px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px;}
+        .btn:hover { background: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);}
+        .math-box { background-color: #0a0a0a; border: 1px solid #333; padding: 10px; border-radius: 4px; font-family: 'Consolas', monospace; margin-top: 5px; font-size: 12px; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+        #cv-container { position: relative; width: 100%; height: 200px; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 10px; border: 1px solid #555;}
+        #output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.8;}
+        #cv_status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #f1c40f; padding: 4px 8px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 11px; border: 1px solid #f1c40f;}
+        .switch-row { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 10px; border-radius: 4px; font-family: 'Consolas', monospace;}
+        .joystick-wrapper { display: flex; justify-content: center; align-items: center; padding: 5px 0; }
+        .joystick-zone { width: 100px; height: 100px; background: #111; border-radius: 50%; position: relative; border: 2px solid #555; box-shadow: inset 0 0 15px rgba(0,0,0,0.8); touch-action: none;}
+        .joystick-knob { width: 40px; height: 40px; background: radial-gradient(circle, #e67e22 0%, #d35400 100%); border-radius: 50%; position: absolute; left: 50%; top: 50%; margin-left: -20px; margin-top: -20px; cursor: grab; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #fff; transition: transform 0.1s ease;}
+        .joystick-knob:active { cursor: grabbing; background: #e67e22;}
+        #ik_status { text-align: center; font-family: 'Consolas', monospace; font-size: 12px; margin-top: 8px; min-height: 15px; color: #aaa;}
+        .panel-ai { border-top: 3px solid #9b59b6; }
+        .panel-math { border-top: 3px solid #f1c40f; }
+        .panel-ik { border-top: 3px solid #2ecc71; }
+        .panel-joy { border-top: 3px solid #e74c3c; }
+        .panel-jog { border-top: 3px solid #3498db; }
+        .panel-grip { border-top: 3px solid #e67e22; }
+    </style>
 </head>
 <body>
-<div class="header">
-<div>
-<span style="font-size: 20px; color: #e67e22;">RoKiSim 6.1</span>
-<span style="font-size: 14px; color: #aaa; margin-left: 10px;">| DESKTOP EDITION</span>
-</div>
-<span id="status" class="status-badge">SYS: OFFLINE</span>
-</div>
+    <div class="header">
+        <div>
+            <span style="font-size: 20px; color: #e67e22;">RoKiSim 6.1</span>
+            <span style="font-size: 14px; color: #aaa; margin-left: 10px;">| DESKTOP EDITION</span>
+        </div>
+        <span id="status" class="status-badge">SYS: OFFLINE</span>
+    </div>
 
-<div class="main-container">
-<div class="visual-column">
-<div class="view-panel">
-<h3>[CAM-01] Gazebo Physics Engine</h3>
-<div class="camera-feed">
-<div class="cam-offline" id="cam-offline-layer">
-<div style="font-size: 18px;">[ NO VIDEO SIGNAL ]</div>
-<span>SIMULATION ENGINE UNREACHABLE</span>
-</div>
-<img id="gazebo-cam" src="http://localhost:8080/stream?topic=/kamera/kamera_sensor/image_raw&type=mjpeg&quality=80" alt="Gazebo Kamerası">
-</div>
-</div>
-<div class="view-panel">
-<h3>[SYS-01] 3D Digital Twin (Local Engine)</h3>
-<div id="canvas3d-container"></div>
-</div>
-</div>
+    <div class="main-container">
+        <div class="visual-column">
+            <div class="view-panel">
+                <h3>[CAM-01] Gazebo Physics Engine</h3>
+                <div class="camera-feed">
+                    <div class="cam-offline" id="cam-offline-layer">
+                        <div style="font-size: 18px;">[ NO VIDEO SIGNAL ]</div>
+                        <span>SIMULATION ENGINE UNREACHABLE</span>
+                    </div>
+                    <img id="gazebo-cam" src="http://localhost:8080/stream?topic=/kamera/kamera_sensor/image_raw&type=mjpeg&quality=80" alt="Gazebo Kamerası">
+                </div>
+            </div>
+            <div class="view-panel">
+                <h3>[SYS-01] 3D Digital Twin (Local Engine)</h3>
+                <div id="canvas3d-container"></div>
+            </div>
+        </div>
 
-<div class="controls-column">
-<div class="panel panel-ai">
-<h3 style="color: #9b59b6;">[MOD-AI] Computer Vision</h3>
-<div id="cv-container">
-<div id="cv_status">AWAITING CAMERA...</div>
-<video id="input_video" style="display:none;"></video>
-<canvas id="output_canvas" width="400" height="200"></canvas>
-</div>
-<div class="switch-row">
-<span style="color: #ccc;">ENABLE AI OVERRIDE:</span>
-
-<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+        <div class="controls-column">
+            
+            <div class="panel panel-ai">
+                <h3 style="color: #9b59b6;">[MOD-AI] Computer Vision</h3>
+                <div id="cv-container">
+                    <div id="cv_status">AWAITING CAMERA...</div>
+                    <video id="input_video" style="display:none;"></video>
+                    <canvas id="output_canvas" width="400" height="200"></canvas>
+                </div>
+                
+                <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
                     <span style="color: #ccc; font-size: 11px;">VOICE ASSIST:</span>
                     <button id="mic_btn" style="background: #c0392b; color: white; border: 1px solid #e74c3c; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold;">🎙️ START MIC</button>
                 </div>
+                
                 <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
                     <span style="color: #ccc; font-size: 11px;">CMD OVERRIDE:</span>
                     <div style="display: flex; gap: 5px;">
-                        <input type="text" id="cmd_input" placeholder="Örn: küp" style="width: 120px; background: #050505; color: #00ff00; border: 1px solid #555; border-radius: 3px; padding: 5px; font-family: 'Consolas', monospace; text-transform: lowercase; outline: none;">
-                        <button id="cmd_btn" style="background: #2980b9; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold;">SEND</button>
+                        <input type="text" id="cmd_input" placeholder="Örn: küp" style="width: 120px; background: #050505; color: #00ff00; border: 1px solid #555; border-radius: 3px; padding: 5px; font-family: 'Consolas', monospace; outline: none;">
+                        <button id="cmd_btn" style="background: #2980b9; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold;">SEND</button>
                     </div>
                 </div>
 
-<label style="display: flex; align-items: center; cursor: pointer; color: #00ff00;">
-<input type="checkbox" id="ai_toggle" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #9b59b6;"> ON
-</label>
-</div>
-</div>
-
-<div class="panel panel-math">
-<h3 style="color: #f1c40f;">[DATA] Real-Time Telemetry</h3>
-<div class="math-box">
-<div style="display: flex; justify-content: space-between;">
-<div>
-<div id="math_x" style="color: #e67e22;">POS_X: 0.000</div>
-<div id="math_y" style="color: #27ae60;">POS_Y: 0.000</div>
-<div id="math_z" style="color: #3498db;">POS_Z: 0.000</div>
-</div>
-<div style="border-left: 1px solid #444; padding-left: 10px;">
-<div id="math_roll" style="color: #ccc;">ROLL : 0.00°</div>
-<div id="math_pitch" style="color: #ccc;">PITCH: 0.00°</div>
-<div id="math_yaw" style="color: #ccc;">YAW : 0.00°</div>
-</div>
-</div>
-</div>
-</div>
-
-<div class="panel panel-ik">
-<h3 style="color: #2ecc71;">[CMD] Inverse Kinematics</h3>
-<div class="data-row"><span class="data-label">TRG_X:</span><input type="number" id="tX" step="0.05" value="0.3"></div>
-<div class="data-row"><span class="data-label">TRG_Y:</span><input type="number" id="tY" step="0.05" value="0.2"></div>
-<div class="data-row"><span class="data-label">TRG_Z:</span><input type="number" id="tZ" step="0.05" value="0.4"></div>
-<button class="btn" onclick="solveIK()">EXECUTE JOG</button>
-<div id="ik_status">SYS: IDLE</div>
-</div>
-
-<div class="panel panel-joy">
-<h3 style="color: #e74c3c;">[CTRL] Analog Override</h3>
-<div class="joystick-wrapper">
-<div class="joystick-zone" id="joyZone"><div class="joystick-knob" id="joyKnob"></div></div>
-</div>
-</div>
-
-<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #444;">
-                    <button id="axes_btn" style="background: #8e44ad; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
-                        📌 EKSENLERİ GÖSTER (X-Y-Z)
-                    </button>
+                <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <span style="color: #ccc;">ENABLE AI OVERRIDE:</span>
+                    <label style="display: flex; align-items: center; cursor: pointer; color: #00ff00;">
+                        <input type="checkbox" id="ai_toggle" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #9b59b6;"> ON
+                    </label>
                 </div>
+            </div>
 
-<div class="panel panel-jog">
-<h3 style="color: #3498db;">[JOG] Joint Diagnostics</h3>
-<div class="data-row"><span class="data-label">J1_BASE :</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j1_s"> <span id="v1" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J2_SHLDR:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j2_s"> <span id="v2" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J3_ELBOW:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j3_s"> <span id="v3" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J4_WRST1:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j4_s"> <span id="v4" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J5_WRST2:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j5_s"> <span id="v5" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J6_FLNGE:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j6_s"> <span id="v6" style="color:#fff">0.00°</span></div>
-</div>
-
-<div class="panel panel-grip">
-    <h3 style="color: #e67e22;">[ACT] End Effector</h3>
-    <div class="data-row">
-        <span class="data-label">JAW_GAP :</span>
-        <input type="range" min="0.0" max="0.125" step="0.001" value="0.0" id="grip_s">
-        <span id="grip_v" style="color: #e67e22;">0.00 mm</span>
-    </div>
-</div>
-
-<div class="panel" style="border-top: 3px solid #95a5a6;">
-    <h3 style="color: #95a5a6;">[CAM] Orbit Control</h3>
-    <div class="data-row">
-        <span class="data-label">AZIMUTH :</span>
-        <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="cam_slider">
-        <span id="cam_val" style="color: #fff;">0.00°</span>
-    </div>
-</div>
-
-<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #444;">
-                    <button id="workspace_btn" style="background: #2980b9; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
-                        🌐 WORKSPACE GÖSTER
-                    </button>
-                </div>
-
-<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
-                    <span style="color: #ccc; font-size: 11px;">TEACH PENDANT:</span>
-                    <div style="display: flex; gap: 5px;">
-                        <button id="rec_btn" style="background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 50%;">🔴 REC</button>
-                        <button id="play_btn" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 50%;">▶️ PLAY</button>
+            <div class="panel panel-math">
+                <h3 style="color: #f1c40f;">[DATA] Real-Time Telemetry</h3>
+                <div class="math-box">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <div id="math_x" style="color: #e67e22;">POS_X: 0.000</div>
+                            <div id="math_y" style="color: #27ae60;">POS_Y: 0.000</div>
+                            <div id="math_z" style="color: #3498db;">POS_Z: 0.000</div>
+                        </div>
+                        <div style="border-left: 1px solid #444; padding-left: 10px;">
+                            <div id="math_roll" style="color: #ccc;">ROLL : 0.00°</div>
+                            <div id="math_pitch" style="color: #ccc;">PITCH: 0.00°</div>
+                            <div id="math_yaw" style="color: #ccc;">YAW : 0.00°</div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-<script>
-let isRosConnected = false;
-var ros = new ROSLIB.Ros({ url : 'ws://localhost:9090' });
-ros.on('connection', function() { 
-isRosConnected = true;
-document.getElementById('status').innerHTML= 'SYS: ONLINE';
-document.getElementById('status').style.backgroundColor= '#27ae60';
-document.getElementById('status').style.color= '#000';
-});
-ros.on('error', function() { 
-isRosConnected = false;
-document.getElementById('status').innerHTML= 'SYS: LOCAL MODE';
-document.getElementById('status').style.backgroundColor= '#f39c12';
-document.getElementById('status').style.color= '#000';
-});
-ros.on('close', function() { 
-isRosConnected = false;
-document.getElementById('status').innerHTML= 'SYS: LOCAL MODE';
-document.getElementById('status').style.backgroundColor= '#f39c12';
-document.getElementById('status').style.color= '#000';
-});
+            <div class="panel panel-ik">
+                <h3 style="color: #2ecc71;">[CMD] Inverse Kinematics</h3>
+                <div class="data-row"><span class="data-label">TRG_X:</span><input type="number" id="tX" step="0.05" value="0.3"></div>
+                <div class="data-row"><span class="data-label">TRG_Y:</span><input type="number" id="tY" step="0.05" value="0.2"></div>
+                <div class="data-row"><span class="data-label">TRG_Z:</span><input type="number" id="tZ" step="0.05" value="0.4"></div>
+                <button class="btn" onclick="solveIK()">EXECUTE JOG</button>
+                <div id="ik_status">SYS: IDLE</div>
+            </div>
 
-var jointTopic = new ROSLIB.Topic({ ros : ros, name : '/arm_controller/commands', messageType : 'std_msgs/Float64MultiArray' });
-var angles = { j1:0, j2:0, j3:0, j4:0, j5:0, j6:0, grip:0, cam:0 };
+            <div class="panel panel-joy">
+                <h3 style="color: #e74c3c;">[CTRL] Analog Override</h3>
+                <div class="joystick-wrapper">
+                    <div class="joystick-zone" id="joyZone"><div class="joystick-knob" id="joyKnob"></div></div>
+                </div>
+            </div>
 
-// KAMERA ÇEVRİMDIŞI MODU (Sinyal Kesici)
-const gazeboCam = document.getElementById('gazebo-cam');
-const offlineLayer = document.getElementById('cam-offline-layer');
-if(gazeboCam && offlineLayer) {
-gazeboCam.onload = () => { gazeboCam.style.opacity = 1; offlineLayer.style.display = 'none'; };
-gazeboCam.onerror = () => { gazeboCam.style.opacity = 0; offlineLayer.style.display = 'flex'; };
-}
-
-// --- SENİN KUSURSUZ 3D KURULUMUN (GLOBAL SCOPE) ---
-THREE.Object3D.DefaultUp.set(0, 0, 1);
-
-const container = document.getElementById('canvas3d-container');
-const cW = container.getBoundingClientRect().width || 500;
-const cH = 350;
-
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a1a1a); 
-const camera3d = new THREE.PerspectiveCamera(45, cW / cH, 0.1, 100);
-camera3d.position.set(1.5, -1.5, 1.2); 
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize(cW, cH); container.appendChild(renderer.domElement);
-const orbitCtrl = new THREE.OrbitControls(camera3d, renderer.domElement);
-
-const grid = new THREE.GridHelper(2, 20, 0x444444, 0x222222);
-grid.rotation.x = Math.PI / 2;
-scene.add(grid);
-scene.add(new THREE.AxesHelper(0.5));
-
-const matGrey = new THREE.MeshPhongMaterial({color: 0x3a3a3a}); 
-const matOrange = new THREE.MeshPhongMaterial({color: 0xd35400});
-
-const robotBase = new THREE.Group(); scene.add(robotBase);
-const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05), matGrey); baseMesh.rotation.x = Math.PI / 2; baseMesh.position.z = 0.025; robotBase.add(baseMesh);
-
-const j1P = new THREE.Group(); j1P.position.set(0, 0, 0.05); robotBase.add(j1P);
-const l1M = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2), matOrange); l1M.rotation.x = Math.PI / 2; l1M.position.z = 0.1; j1P.add(l1M);
-
-const j2P = new THREE.Group(); j2P.position.set(0, 0, 0.2); j1P.add(j2P);
-const l2M = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4), matGrey); l2M.rotation.x = Math.PI / 2; l2M.position.z = 0.2; j2P.add(l2M);
-
-const j3P = new THREE.Group(); j3P.position.set(0, 0, 0.4); j2P.add(j3P);
-const l3M = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), matOrange); l3M.rotation.x = Math.PI / 2; l3M.position.z = 0.15; j3P.add(l3M);
-
-const j4P = new THREE.Group(); j4P.position.set(0, 0, 0.3); j3P.add(j4P);
-const l4M = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1), matGrey); l4M.rotation.x = Math.PI / 2; l4M.position.z = 0.05; j4P.add(l4M);
-
-const j5P = new THREE.Group(); j5P.position.set(0, 0, 0.1); j4P.add(j5P);
-const l5M = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1), matOrange); l5M.rotation.x = Math.PI / 2; l5M.position.z = 0.05; j5P.add(l5M);
-
-const j6P = new THREE.Group(); j6P.position.set(0, 0, 0.1); j5P.add(j6P);
-const l6M = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05), matGrey); l6M.rotation.x = Math.PI / 2; l6M.position.z = 0.025; j6P.add(l6M);
-
-const gripBase = new THREE.Group(); gripBase.position.set(0, 0, 0.05); j6P.add(gripBase);
-const gripM = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.06), matOrange); gripM.position.z = 0.03; gripBase.add(gripM);
-
-const light = new THREE.DirectionalLight(0xffffff, 1); light.position.set(5, 5, 10); scene.add(light);
-scene.add(new THREE.AmbientLight(0x404040));
-
-let currentEuler = new THREE.Euler();
-let currentQuat = new THREE.Quaternion();
-
-function getEndEffectorPos(tempA) {
-j1P.rotation.z = tempA.j1; 
-j2P.rotation.y = 1.5708 + tempA.j2; 
-j3P.rotation.y = tempA.j3; 
-j4P.rotation.x = tempA.j4; 
-j5P.rotation.y = tempA.j5; 
-j6P.rotation.z = tempA.j6;
-robotBase.updateMatrixWorld(true);
-let pos = new THREE.Vector3();
-gripBase.getWorldPosition(pos);
-return pos;
-}
-
-
-
-
-
-
-
-function solveIK() {
-    let target = new THREE.Vector3(
-        parseFloat(document.getElementById('tX').value), 
-        parseFloat(document.getElementById('tY').value), 
-        parseFloat(document.getElementById('tZ').value)
-    );
-    
-    // ==========================================
-    // ERİŞİM MESAFESİ KONTROLÜ VE SESLİ HATA
-    // ==========================================
-    if(target.length() > 0.95) { 
-        document.getElementById('ik_status').innerText = "ERR: OUT OF REACH"; 
-        document.getElementById('ik_status').style.color = "#e74c3c"; 
-        
-        // J.A.R.V.I.S. İNGİLİZCE HATA BİLDİRİMİ
-        speakStatus("Error. Coordinates are out of physical reach limits."); 
-        return; 
-    }
-    
-    document.getElementById('ik_status').innerText = "SYS: CALCULATING..."; 
-    document.getElementById('ik_status').style.color = "#f1c40f";
-
-    let tempAngles = { ...angles };
-    let lr = 0.5; 
-    let delta = 0.01;
-    
-    // Gradient Descent (Ters Kinematik Hesaplama Döngüsü)
-    for(let i=0; i<200; i++) {
-        let p = getEndEffectorPos(tempAngles);
-        let err = p.distanceTo(target);
-        if(err < 0.005) break; 
-        
-        let grads = {}; 
-        let keys = ['j1','j2','j3','j4','j5','j6'];
-        
-        for(let k of keys) {
-            let orig = tempAngles[k]; 
-            tempAngles[k] += delta;
-            let newP = getEndEffectorPos(tempAngles);
-            grads[k] = (newP.distanceTo(target) - err) / delta;
-            tempAngles[k] = orig;
-        }
-        
-        for(let k of keys) {
-            tempAngles[k] -= lr * grads[k];
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #444;">
+                <h3 style="color: #aaa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0; text-align: center;">[DATA] TELEMETRİ MERKEZİ</h3>
+                <div style="display: flex; gap: 5px;">
+                    <button id="pos_btn" style="flex: 1; background: #3498db; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">📈 KONUM</button>
+                    <button id="load_btn" style="flex: 1; background: #e67e22; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">⚡ TORK</button>
+                    <button id="vel_btn" style="flex: 1; background: #9b59b6; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">🚀 TCP HIZ</button>
+                </div>
+            </div>
             
-            // FİZİKSEL ÇARPIŞMA VE AÇI LİMİTLERİ
-            if (k === 'j1') {
-                tempAngles.j1 = Math.max(-2.8, Math.min(2.8, tempAngles.j1)); // Taban: ±160°
-            } else if (k === 'j2') {
-                tempAngles.j2 = Math.max(-1.57, Math.min(1.57, tempAngles.j2)); // Omuz: ±90°
-            } else if (k === 'j3') {
-                tempAngles.j3 = Math.max(-2.45, Math.min(2.45, tempAngles.j3)); // Dirsek: ±140°
-            } else if (k === 'j5') {
-                tempAngles.j5 = Math.max(-1.57, Math.min(1.57, tempAngles.j5)); // Bilek: ±90°
-            } else {
-                tempAngles[k] = Math.max(-Math.PI, Math.min(Math.PI, tempAngles[k])); // j4 ve j6 için 360° serbest
-            }
-        }
-    }
+            <div style="margin-top: 10px;">
+                <button id="axes_btn" style="background: #8e44ad; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
+                    📌 EKSENLERİ GÖSTER (X-Y-Z)
+                </button>
+            </div>
 
-    // Hesaplanan güvenli açıları robota ve arayüze uygula
-    ['j1','j2','j3','j4','j5','j6'].forEach((k, idx) => {
-        angles[k] = tempAngles[k];
-        document.getElementById(k+'_s').value = angles[k];
-        document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
-    });
+            <div style="margin-top: 10px;">
+                <button id="workspace_btn" style="background: #2980b9; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
+                    🌐 WORKSPACE GÖSTER
+                </button>
+            </div>
+
+            <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                <span style="color: #ccc; font-size: 11px;">TEACH PENDANT:</span>
+                <div style="display: flex; gap: 5px;">
+                    <button id="rec_btn" style="background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; width: 50%;">🔴 REC</button>
+                    <button id="play_btn" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; width: 50%;">▶️ PLAY</button>
+                </div>
+            </div>
+
+            <div class="panel panel-jog">
+                <h3 style="color: #3498db;">[JOG] Joint Diagnostics</h3>
+                <div class="data-row"><span class="data-label">J1_BASE :</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j1_s"> <span id="v1" style="color:#fff">0.00°</span></div>
+                <div class="data-row"><span class="data-label">J2_SHLDR:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j2_s"> <span id="v2" style="color:#fff">0.00°</span></div>
+                <div class="data-row"><span class="data-label">J3_ELBOW:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j3_s"> <span id="v3" style="color:#fff">0.00°</span></div>
+                <div class="data-row"><span class="data-label">J4_WRST1:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j4_s"> <span id="v4" style="color:#fff">0.00°</span></div>
+                <div class="data-row"><span class="data-label">J5_WRST2:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j5_s"> <span id="v5" style="color:#fff">0.00°</span></div>
+                <div class="data-row"><span class="data-label">J6_FLNGE:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j6_s"> <span id="v6" style="color:#fff">0.00°</span></div>
+            </div>
+
+            <div class="panel panel-grip">
+                <h3 style="color: #e67e22;">[ACT] End Effector</h3>
+                <div class="data-row">
+                    <span class="data-label">JAW_GAP :</span>
+                    <input type="range" min="0.0" max="0.125" step="0.001" value="0.0" id="grip_s">
+                    <span id="grip_v" style="color: #e67e22;">0.00 mm</span>
+                </div>
+            </div>
+
+            <div class="panel" style="border-top: 3px solid #95a5a6;">
+                <h3 style="color: #95a5a6;">[CAM] Orbit Control</h3>
+                <div class="data-row">
+                    <span class="data-label">AZIMUTH :</span>
+                    <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="cam_slider">
+                    <span id="cam_val" style="color: #fff;">0.00°</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     
-    document.getElementById('ik_status').innerText = "SYS: TARGET REACHED"; 
-    document.getElementById('ik_status').style.color = "#2ecc71";
-}
+</div>
 
-function animate3D() {
-requestAnimationFrame(animate3D);
-let currentP = getEndEffectorPos(angles);
-gripM.position.x = angles.grip; 
-gripBase.getWorldQuaternion(currentQuat);
-currentEuler.setFromQuaternion(currentQuat);
+<div id="pos_modal" style="display: none; position: fixed; top: 5%; left: 5%; width: 550px; height: 800px; background: rgba(15, 15, 15, 0.98); border: 2px solid #3498db; border-radius: 8px; z-index: 9999; box-shadow: 0 0 40px #000; flex-direction: column;">
+        <div id="pos_header" style="background: #1a1a1a; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; cursor: move;">
+            <span style="color: #3498db; font-family: 'Consolas'; font-weight: bold;">[DATA] JOINT POSITIONS (DEG)</span>
+            <button onclick="document.getElementById('pos_modal').style.display='none'" style="background:#c0392b; color:white; border:none; border-radius:4px; padding:2px 10px; cursor:pointer;">X</button>
+        </div>
+        <div style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 25px;">
+            <div style="border-left: 4px solid #3498db; padding-left: 10px;">
+                <div style="color:#3498db; font-family:'Consolas'; font-size:12px; margin-bottom:5px; font-weight:bold;">> MOTOR J1 - BASE POSITION</div>
+                <div style="height:120px; background:#000;"><canvas id="chart_j1"></canvas></div>
+            </div>
+            <div style="border-left: 4px solid #3498db; padding-left: 10px;">
+                <div style="color:#3498db; font-family:'Consolas'; font-size:12px; margin-bottom:5px; font-weight:bold;">> MOTOR J2 - SHOULDER POSITION</div>
+                <div style="height:120px; background:#000;"><canvas id="chart_j2"></canvas></div>
+            </div>
+            <div style="border-left: 4px solid #3498db; padding-left: 10px;">
+                <div style="color:#3498db; font-family:'Consolas'; font-size:12px; margin-bottom:5px; font-weight:bold;">> MOTOR J3 - ELBOW POSITION</div>
+                <div style="height:120px; background:#000;"><canvas id="chart_j3"></canvas></div>
+            </div>
+            <div style="border-left: 4px solid #3498db; padding-left: 10px;">
+                <div style="color:#3498db; font-family:'Consolas'; font-size:12px; margin-bottom:5px; font-weight:bold;">> MOTOR J4 - WRIST ROLL</div>
+                <div style="height:120px; background:#000;"><canvas id="chart_j4"></canvas></div>
+            </div>
+            <div style="border-left: 4px solid #3498db; padding-left: 10px;">
+                <div style="color:#3498db; font-family:'Consolas'; font-size:12px; margin-bottom:5px; font-weight:bold;">> MOTOR J5 - WRIST PITCH</div>
+                <div style="height:120px; background:#000;"><canvas id="chart_j5"></canvas></div>
+            </div>
+            <div style="border-left: 4px solid #3498db; padding-left: 10px;">
+                <div style="color:#3498db; font-family:'Consolas'; font-size:12px; margin-bottom:5px; font-weight:bold;">> MOTOR J6 - FLANGE ROTATION</div>
+                <div style="height:120px; background:#000;"><canvas id="chart_j6"></canvas></div>
+            </div>
+        </div>
+    </div>
 
-orbitCtrl.update(); 
-renderer.render(scene, camera3d);
+    <div id="load_modal" style="display: none; position: fixed; top: 10%; right: 5%; width: 500px; height: 500px; background: rgba(15, 15, 15, 0.98); border: 2px solid #e67e22; border-radius: 8px; z-index: 9999; box-shadow: 0 0 40px #000; flex-direction: column;">
+        <div id="load_header" style="background: #1a1a1a; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e67e22; cursor: move;">
+            <span style="color: #e67e22; font-family: 'Consolas'; font-weight: bold;">[DATA] MOTOR LOAD & TORQUE (%)</span>
+            <button onclick="document.getElementById('load_modal').style.display='none'" style="background:#c0392b; color:white; border:none; border-radius:4px; padding:2px 10px; cursor:pointer;">X</button>
+        </div>
+        <div style="flex: 1; padding: 25px; background: #000;">
+            <div style="height: 100%; width: 100%;"><canvas id="load_chart"></canvas></div>
+        </div>
+    </div>
 
-document.getElementById('math_x').innerText = `POS_X: ${currentP.x.toFixed(3)}`;
-document.getElementById('math_y').innerText = `POS_Y: ${currentP.y.toFixed(3)}`;
-document.getElementById('math_z').innerText = `POS_Z: ${currentP.z.toFixed(3)}`;
-document.getElementById('math_roll').innerText = `ROLL : ${(currentEuler.x * 180/Math.PI).toFixed(1)}°`;
-document.getElementById('math_pitch').innerText = `PITCH: ${(currentEuler.y * 180/Math.PI).toFixed(1)}°`;
-document.getElementById('math_yaw').innerText = `YAW : ${(currentEuler.z * 180/Math.PI).toFixed(1)}°`;
-}
-// SENİN SİHRİN: Döngü anında tetikleniyor!
-animate3D(); 
+    <div id="vel_modal" style="display: none; position: fixed; top: 15%; left: 30%; width: 500px; height: 350px; background: rgba(15, 15, 15, 0.98); border: 2px solid #9b59b6; border-radius: 8px; z-index: 9999; box-shadow: 0 0 40px #000; flex-direction: column;">
+        <div id="vel_header" style="background: #1a1a1a; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #9b59b6; cursor: move;">
+            <span style="color: #9b59b6; font-family: 'Consolas'; font-weight: bold;">[DATA] TCP KINEMATIC VELOCITY (m/s)</span>
+            <button onclick="document.getElementById('vel_modal').style.display='none'" style="background:#c0392b; color:white; border:none; border-radius:4px; padding:2px 10px; cursor:pointer;">X</button>
+        </div>
+        <div style="flex: 1; padding: 25px; background: #000;">
+            <div style="height: 100%; width: 100%;"><canvas id="vel_chart"></canvas></div>
+        </div>
+    </div>
 
-window.addEventListener('resize', () => { 
-let curW = container.getBoundingClientRect().width || 500;
-camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSize(curW, 350); 
-});
+    <script>
+        let isRosConnected = false;
+        var ros = new ROSLIB.Ros({ url : 'ws://localhost:9090' });
+        ros.on('connection', function() { 
+            isRosConnected = true;
+            document.getElementById('status').innerHTML= 'SYS: ONLINE';
+            document.getElementById('status').style.backgroundColor= '#27ae60';
+            document.getElementById('status').style.color= '#000';
+        });
+        ros.on('error', function() { 
+            isRosConnected = false;
+            document.getElementById('status').innerHTML= 'SYS: LOCAL MODE';
+            document.getElementById('status').style.backgroundColor= '#f39c12';
+            document.getElementById('status').style.color= '#000';
+        });
+        ros.on('close', function() { 
+            isRosConnected = false;
+            document.getElementById('status').innerHTML= 'SYS: LOCAL MODE';
+            document.getElementById('status').style.backgroundColor= '#f39c12';
+            document.getElementById('status').style.color= '#000';
+        });
 
-// MEDIAPIPE AI ENTEGRASYONU
+        var jointTopic = new ROSLIB.Topic({ ros : ros, name : '/arm_controller/commands', messageType : 'std_msgs/Float64MultiArray' });
+        var angles = { j1:0, j2:0, j3:0, j4:0, j5:0, j6:0, grip:0, cam:0 };
+
+        // KAMERA ÇEVRİMDIŞI MODU (Sinyal Kesici)
+        const gazeboCam = document.getElementById('gazebo-cam');
+        const offlineLayer = document.getElementById('cam-offline-layer');
+        if(gazeboCam && offlineLayer) {
+            gazeboCam.onload = () => { gazeboCam.style.opacity = 1; offlineLayer.style.display = 'none'; };
+            gazeboCam.onerror = () => { gazeboCam.style.opacity = 0; offlineLayer.style.display = 'flex'; };
+        }
+
+        // --- 3D KURULUM (GLOBAL SCOPE) ---
+        THREE.Object3D.DefaultUp.set(0, 0, 1);
+        const container = document.getElementById('canvas3d-container');
+        const cW = container.getBoundingClientRect().width || 500;
+        const cH = 350;
+
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a1a1a); 
+        const camera3d = new THREE.PerspectiveCamera(45, cW / cH, 0.1, 100);
+        camera3d.position.set(1.5, -1.5, 1.2); 
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(cW, cH); container.appendChild(renderer.domElement);
+        const orbitCtrl = new THREE.OrbitControls(camera3d, renderer.domElement);
+
+        const grid = new THREE.GridHelper(2, 20, 0x444444, 0x222222);
+        grid.rotation.x = Math.PI / 2;
+        scene.add(grid);
+        scene.add(new THREE.AxesHelper(0.5));
+
+        const matGrey = new THREE.MeshPhongMaterial({color: 0x3a3a3a}); 
+        const matOrange = new THREE.MeshPhongMaterial({color: 0xd35400});
+
+        const robotBase = new THREE.Group(); scene.add(robotBase);
+        const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05), matGrey); baseMesh.rotation.x = Math.PI / 2; baseMesh.position.z = 0.025; robotBase.add(baseMesh);
+
+        const j1P = new THREE.Group(); j1P.position.set(0, 0, 0.05); robotBase.add(j1P);
+        const l1M = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2), matOrange); l1M.rotation.x = Math.PI / 2; l1M.position.z = 0.1; j1P.add(l1M);
+
+        const j2P = new THREE.Group(); j2P.position.set(0, 0, 0.2); j1P.add(j2P);
+        const l2M = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4), matGrey); l2M.rotation.x = Math.PI / 2; l2M.position.z = 0.2; j2P.add(l2M);
+
+        const j3P = new THREE.Group(); j3P.position.set(0, 0, 0.4); j2P.add(j3P);
+        const l3M = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), matOrange); l3M.rotation.x = Math.PI / 2; l3M.position.z = 0.15; j3P.add(l3M);
+
+        const j4P = new THREE.Group(); j4P.position.set(0, 0, 0.3); j3P.add(j4P);
+        const l4M = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1), matGrey); l4M.rotation.x = Math.PI / 2; l4M.position.z = 0.05; j4P.add(l4M);
+
+        const j5P = new THREE.Group(); j5P.position.set(0, 0, 0.1); j4P.add(j5P);
+        const l5M = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1), matOrange); l5M.rotation.x = Math.PI / 2; l5M.position.z = 0.05; j5P.add(l5M);
+
+        const j6P = new THREE.Group(); j6P.position.set(0, 0, 0.1); j5P.add(j6P);
+        const l6M = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05), matGrey); l6M.rotation.x = Math.PI / 2; l6M.position.z = 0.025; j6P.add(l6M);
+
+        const gripBase = new THREE.Group(); gripBase.position.set(0, 0, 0.05); j6P.add(gripBase);
+        const gripM = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.06), matOrange); gripM.position.z = 0.03; gripBase.add(gripM);
+
+        const light = new THREE.DirectionalLight(0xffffff, 1); light.position.set(5, 5, 10); scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        let currentEuler = new THREE.Euler();
+        let currentQuat = new THREE.Quaternion();
+
+        function getEndEffectorPos(tempA) {
+            j1P.rotation.z = tempA.j1; 
+            j2P.rotation.y = 1.5708 + tempA.j2; 
+            j3P.rotation.y = tempA.j3; 
+            j4P.rotation.x = tempA.j4; 
+            j5P.rotation.y = tempA.j5; 
+            j6P.rotation.z = tempA.j6;
+            robotBase.updateMatrixWorld(true);
+            let pos = new THREE.Vector3();
+            gripBase.getWorldPosition(pos);
+            return pos;
+        }
+
+        function solveIK() {
+            let target = new THREE.Vector3(
+                parseFloat(document.getElementById('tX').value), 
+                parseFloat(document.getElementById('tY').value), 
+                parseFloat(document.getElementById('tZ').value)
+            );
+            
+            if(target.length() > 0.95) { 
+                document.getElementById('ik_status').innerText = "ERR: OUT OF REACH"; 
+                document.getElementById('ik_status').style.color = "#e74c3c"; 
+                speakStatus("Error. Coordinates are out of physical reach limits."); 
+                return; 
+            }
+            
+            document.getElementById('ik_status').innerText = "SYS: CALCULATING..."; 
+            document.getElementById('ik_status').style.color = "#f1c40f";
+
+            let tempAngles = { ...angles };
+            let lr = 0.5; let delta = 0.01;
+            
+            for(let i=0; i<200; i++) {
+                let p = getEndEffectorPos(tempAngles);
+                let err = p.distanceTo(target);
+                if(err < 0.005) break; 
+                
+                let grads = {}; let keys = ['j1','j2','j3','j4','j5','j6'];
+                for(let k of keys) {
+                    let orig = tempAngles[k]; tempAngles[k] += delta;
+                    let newP = getEndEffectorPos(tempAngles);
+                    grads[k] = (newP.distanceTo(target) - err) / delta;
+                    tempAngles[k] = orig;
+                }
+                for(let k of keys) {
+                    tempAngles[k] -= lr * grads[k];
+                    if (k === 'j1') tempAngles.j1 = Math.max(-2.8, Math.min(2.8, tempAngles.j1));
+                    else if (k === 'j2') tempAngles.j2 = Math.max(-1.57, Math.min(1.57, tempAngles.j2));
+                    else if (k === 'j3') tempAngles.j3 = Math.max(-2.45, Math.min(2.45, tempAngles.j3));
+                    else if (k === 'j5') tempAngles.j5 = Math.max(-1.57, Math.min(1.57, tempAngles.j5));
+                    else tempAngles[k] = Math.max(-Math.PI, Math.min(Math.PI, tempAngles[k]));
+                }
+            }
+
+            ['j1','j2','j3','j4','j5','j6'].forEach((k, idx) => {
+                angles[k] = tempAngles[k];
+                document.getElementById(k+'_s').value = angles[k];
+                document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
+            });
+            document.getElementById('ik_status').innerText = "SYS: TARGET REACHED"; 
+            document.getElementById('ik_status').style.color = "#2ecc71";
+        }
+
+        // =========================================================
+        // [MOD-CHART] ÜÇLÜ ANALİZ VE FİLTRELENMİŞ KİNEMATİK MOTORU
+        // =========================================================
+        const modals = {
+            pos: { el: document.getElementById('pos_modal'), header: document.getElementById('pos_header'), btn: document.getElementById('pos_btn') },
+            load: { el: document.getElementById('load_modal'), header: document.getElementById('load_header'), btn: document.getElementById('load_btn') },
+            vel: { el: document.getElementById('vel_modal'), header: document.getElementById('vel_header'), btn: document.getElementById('vel_btn') }
+        };
+
+        // 🛠️ DÜZELTİLMİŞ PENCERE SÜRÜKLEME KONTROLÜ (Hepsi aynı anda çalışır)
+        let activeModal = null;
+        let dragOx = 0, dragOy = 0;
+
+        function attachDrag(m) {
+            m.header.onmousedown = (e) => {
+                activeModal = m.el;
+                dragOx = e.clientX - activeModal.offsetLeft;
+                dragOy = e.clientY - activeModal.offsetTop;
+                activeModal.style.opacity = "0.8";
+                activeModal.style.zIndex = "10000"; // Tıklananı en üste getir
+            };
+        }
+        attachDrag(modals.pos); attachDrag(modals.load); attachDrag(modals.vel);
+
+        document.addEventListener('mousemove', (e) => {
+            if (activeModal) {
+                activeModal.style.left = (e.clientX - dragOx) + "px";
+                activeModal.style.top = (e.clientY - dragOy) + "px";
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (activeModal) {
+                activeModal.style.opacity = "1";
+                activeModal.style.zIndex = "9999";
+                activeModal = null;
+            }
+        });
+
+        // BUTON KONTROLLERİ
+        modals.pos.btn.onclick = () => modals.pos.el.style.display = 'flex';
+        modals.load.btn.onclick = () => modals.load.el.style.display = 'flex';
+        modals.vel.btn.onclick = () => modals.vel.el.style.display = 'flex';
+
+        // 📈 1. KONUM GRAFİKLERİ KURULUMU
+        const charts = {}; const ids = ['j1','j2','j3','j4','j5','j6'];
+        ids.forEach((id, i) => {
+            charts[id] = new Chart(document.getElementById(`chart_${id}`).getContext('2d'), {
+                type: 'line',
+                data: { labels: Array(50).fill(''), datasets: [{ label: `J${i+1} Position`, data: Array(50).fill(0), borderColor: '#3498db', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(52, 152, 219, 0.1)', tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { y: { grid: {color:'#222'}, ticks: {color:'#888', font:{size:9}}, grace:'5%' }, x: { display: false } }, plugins: { legend: { display: false } } }
+            });
+        });
+
+        // ⚡ 2. YÜK/TORK GRAFİĞİ KURULUMU
+        const loadChart = new Chart(document.getElementById('load_chart').getContext('2d'), {
+            type: 'bar',
+            data: { labels: ['J1 BASE', 'J2 SHLDR', 'J3 ELBOW', 'J4 WRST1', 'J5 WRST2', 'J6 GRIP'], datasets: [{ data: [0,0,0,0,0,0], backgroundColor: '#e67e22', borderRadius: 5 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { min: 0, max: 100, grid: {color:'#333'}, ticks: {color:'#aaa'} }, y: { ticks: {color:'#fff', font:{family:'Consolas', weight:'bold'}} } }, plugins: { legend: { display: false } } }
+        });
+
+        // 🚀 3. TCP HIZ GRAFİĞİ KURULUMU
+        const velChart = new Chart(document.getElementById('vel_chart').getContext('2d'), {
+            type: 'line',
+            data: { 
+                labels: Array(60).fill(''), 
+                datasets: [{ 
+                    label: 'TCP Velocity (m/s)', 
+                    data: Array(60).fill(0), 
+                    borderColor: '#9b59b6', 
+                    borderWidth: 3, pointRadius: 0, fill: true, 
+                    backgroundColor: 'rgba(155, 89, 182, 0.2)', 
+                    tension: 0.4 
+                }] 
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, animation: false, 
+                scales: { 
+                    y: { min: 0, suggestedMax: 1.0, grid: {color:'#333'}, ticks: {color:'#aaa', font:{family:'Consolas'}} }, 
+                    x: { display: false } 
+                }, 
+                plugins: { legend: { display: false } } 
+            }
+        });
+
+        // VERİ GÜNCELLEME DÖNGÜSÜ
+        let lastA = {j1:0, j2:0, j3:0, j4:0, j5:0, j6:0};
+        let lastPos = new THREE.Vector3(0, 0, 0);
+        let smoothedVelocity = 0; // 🛠️ DÜŞÜK GEÇİREN FİLTRE DEĞİŞKENİ
+
+        setInterval(() => {
+            let currentPos = getEndEffectorPos(angles);
+
+            // 1. Konum Güncellemesi
+            if(modals.pos.el.style.display !== 'none') {
+                ids.forEach(id => { let d = charts[id].data.datasets[0].data; d.push(angles[id] * 180 / Math.PI); d.shift(); charts[id].update(); });
+            }
+            
+            // 2. Yük Güncellemesi
+            if(modals.load.el.style.display !== 'none') {
+                let r = Math.hypot(currentPos.x, currentPos.y);
+                let loads = [
+                    Math.abs(angles.j1 - lastA.j1) * 400 + 5,
+                    (r / 0.95) * 85 + Math.abs(angles.j2 - lastA.j2) * 250 + 10,
+                    Math.abs(angles.j3) * 20 + Math.abs(angles.j3 - lastA.j3) * 200 + 8,
+                    Math.abs(angles.j4 - lastA.j4) * 150 + 5,
+                    Math.abs(angles.j5 - lastA.j5) * 150 + 5,
+                    Math.abs(angles.j6 - lastA.j6) * 150 + (angles.grip * 300) + 2
+                ];
+                loadChart.data.datasets[0].data = loads.map(l => Math.min(100, l));
+                loadChart.data.datasets[0].backgroundColor = loads.map(l => l > 80 ? '#c0392b' : (l > 50 ? '#f39c12' : '#2ecc71'));
+                loadChart.update();
+            }
+
+            // 3. 🚀 Hız (Velocity) Güncellemesi (Filtrelenmiş)
+            if(modals.vel.el.style.display !== 'none') {
+                let distance = currentPos.distanceTo(lastPos);
+                let rawVelocity = distance / 0.1; // Ham Hız (m/s)
+                
+                // 🛠️ LOW-PASS FILTER: Ani şokları emer, grafiği yumuşatır
+                smoothedVelocity = (smoothedVelocity * 0.7) + (rawVelocity * 0.3);
+                
+                // 🛠️ DEADZONE: Çok küçük dijital titreşimleri sıfırlar (Motor durduğunda grafik tam sıfıra iner)
+                if (smoothedVelocity < 0.005) smoothedVelocity = 0;
+                
+                let vData = velChart.data.datasets[0].data;
+                vData.push(smoothedVelocity); vData.shift(); 
+                velChart.update();
+            }
+
+            lastA = {...angles};
+            lastPos.copy(currentPos);
+        }, 100);
+        // =========================================================
+
+        
+        // =========================================================
+        // ANIMATE 3D (DİJİTAL İKİZ DÖNGÜSÜ)
+        // =========================================================
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            let currentP = getEndEffectorPos(angles);
+            gripM.position.x = angles.grip; 
+            gripBase.getWorldQuaternion(currentQuat);
+            currentEuler.setFromQuaternion(currentQuat);
+
+            orbitCtrl.update(); 
+            renderer.render(scene, camera3d);
+
+            document.getElementById('math_x').innerText = `POS_X: ${currentP.x.toFixed(3)}`;
+            document.getElementById('math_y').innerText = `POS_Y: ${currentP.y.toFixed(3)}`;
+            document.getElementById('math_z').innerText = `POS_Z: ${currentP.z.toFixed(3)}`;
+            document.getElementById('math_roll').innerText = `ROLL : ${(currentEuler.x * 180/Math.PI).toFixed(1)}°`;
+            document.getElementById('math_pitch').innerText = `PITCH: ${(currentEuler.y * 180/Math.PI).toFixed(1)}°`;
+            document.getElementById('math_yaw').innerText = `YAW : ${(currentEuler.z * 180/Math.PI).toFixed(1)}°`;
+        }
+        animate3D(); 
+
+        window.addEventListener('resize', () => { 
+            let curW = container.getBoundingClientRect().width || 500;
+            camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSize(curW, 350); 
+        });
+
+        // =========================================================
+        // MEDIAPIPE AI ENTEGRASYONU (HATA KORUMALI - KAMERA OLMASA DA ÇÖKMEZ)
+        // =========================================================
         const videoElement = document.getElementById('input_video');
         const canvasElement = document.getElementById('output_canvas');
         const canvasCtx = canvasElement.getContext('2d');
@@ -402,7 +582,6 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
         const statusText = document.getElementById('cv_status');
 
         const hands = new Hands({locateFile: (file) => { return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`; }});
-        // maxNumHands: 2 YAPILDI! Artık iki eli aynı anda okur.
         hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
 
         hands.onResults((results) => {
@@ -414,7 +593,6 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 statusText.innerText = "SYS: TRACKING " + results.multiHandLandmarks.length + " HAND(S)"; 
                 statusText.style.color = "#2ecc71";
                 
-                // Ekranda tespit edilen tüm ellerin iskeletini çiz
                 for(let i = 0; i < results.multiHandLandmarks.length; i++) {
                     drawConnectors(canvasCtx, results.multiHandLandmarks[i], HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
                     drawLandmarks(canvasCtx, results.multiHandLandmarks[i], {color: '#FF0000', lineWidth: 1, radius: 3});
@@ -423,10 +601,8 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                 if(aiToggle.checked) {
                     for(let i = 0; i < results.multiHandLandmarks.length; i++) {
                         const landmarks = results.multiHandLandmarks[i];
-                        // Kameranın ayna etkisinden dolayı MediaPipe 'Right' ve 'Left' etiketlerini ters verebilir.
                         const handLabel = results.multiHandedness[i].label; 
 
-                        // 1. SOL EL (ROBOTU SÜRER)
                         if (handLabel === 'Left') {
                             let target_j1 = (0.5 - landmarks[0].x) * 3.14; 
                             let target_j2 = (landmarks[0].y - 0.5) * 2.0;
@@ -444,31 +620,18 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
                             angles.j3 = Math.max(-2.5, Math.min(2.5, angles.j3));
                         }
 
-                        // 2. SAĞ EL (KISKACI AÇIP KAPATIR)
                         if (handLabel === 'Right') {
-                            // Başparmak ucu (4) ile işaret parmağı ucu (8) arasındaki mesafeyi ölç
                             let pinchDist = Math.hypot(landmarks[8].x - landmarks[4].x, landmarks[8].y - landmarks[4].y);
-                            
                             let target_grip = 0.0;
-                            // Parmaklar bitişikse (mesafe darsa) kıskaç tamamen kapansın (0.125)
-                            if (pinchDist < 0.05) {
-                                target_grip = 0.125; 
-                            } 
-                            // Parmaklar açıksa kıskaç tamamen açılsın (0.0)
-                            else if (pinchDist > 0.15) {
-                                target_grip = 0.0;
-                            } 
-                            // Ara mesafelerde yumuşak kapanma hesabı
-                            else {
-                                target_grip = 0.125 - ((pinchDist - 0.05) / 0.10) * 0.125;
-                            }
+                            if (pinchDist < 0.05) target_grip = 0.125; 
+                            else if (pinchDist > 0.15) target_grip = 0.0;
+                            else target_grip = 0.125 - ((pinchDist - 0.05) / 0.10) * 0.125;
 
                             angles.grip += (target_grip - angles.grip) * 0.2;
                             angles.grip = Math.max(0.0, Math.min(0.125, angles.grip));
                         }
                     }
 
-                    // Arayüzdeki sayıları ve çubukları güncelle
                     ['j1','j2','j3','j4','j5'].forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
                     document.getElementById('grip_s').value = angles.grip; document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
                 }
@@ -480,9 +643,18 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
         });
 
         const camera = new Camera(videoElement, { onFrame: async () => { await hands.send({image: videoElement}); }, width: 400, height: 200 });
-        camera.start();
+        
+        // KAMERA YOKSA SİSTEMİN ÇÖKMESİNİ ENGELLEYEN HATA KORUMASI
+        camera.start().catch(err => {
+            console.error("Camera Initialisation Error:", err);
+            statusText.innerText = "SYS: CAM OFFLINE / NO DEVICE";
+            statusText.style.color = "#e74c3c";
+            aiToggle.disabled = true; // Kamerası yoksa AI butonunu kapat
+        });
 
+        // =========================================================
         // ANALOG JOYSTICK MANTIĞI
+        // =========================================================
         const joyZone = document.getElementById('joyZone'); const joyKnob = document.getElementById('joyKnob');
         let isDragging = false; let joyDX = 0, joyDY = 0;
 
@@ -532,7 +704,7 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
         bindSlider('j5_s', 'v5', 'j5', 180/Math.PI, '°'); bindSlider('j6_s', 'v6', 'j6', 180/Math.PI, '°');
         bindSlider('grip_s', 'grip_v', 'grip', 1000, ' mm'); bindSlider('cam_slider', 'cam_val', 'cam', 180/Math.PI, '°');
 
-        // ROS'A VERİ GÖNDERME (SADECE BAĞLIYSA GÖNDER)
+        // ROS'A VERİ GÖNDERME
         setInterval(function() {
             if(isRosConnected) {
                 var msg = new ROSLIB.Message({ layout: { dim: [], data_offset: 0 }, data: [angles.j1, angles.j2, angles.j3, angles.j4, angles.j5, angles.j6, angles.grip, angles.cam] });
@@ -540,210 +712,95 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
             }
         }, 50);
 
-
-
-
-
-
-
-
-
-
-
-
-
         // =========================================================
-        // [MOD-JARVIS] SESLİ GERİ BİLDİRİM MOTORU (İNGİLİZCE ERKEK SESİ)
+        // [MOD-JARVIS] SESLİ GERİ BİLDİRİM MOTORU
         // =========================================================
         const synth = window.speechSynthesis;
         let voiceReady = false;
 
         function speakStatus(text) {
-            if (synth.speaking) {
-                synth.cancel(); 
-            }
+            if (synth.speaking) synth.cancel(); 
             if (text !== '') {
                 const utterThis = new SpeechSynthesisUtterance(text);
-                
-                // Sistemdeki sesleri çek ve İngilizce erkek sesi ara
                 const voices = synth.getVoices();
-                let selectedVoice = voices.find(voice => 
-                    voice.name.includes('Google UK English Male') || 
-                    voice.name.includes('David') || 
-                    voice.name.includes('Mark') ||
-                    (voice.lang.startsWith('en-') && voice.name.includes('Male'))
-                );
-
-                // Eğer özel bir erkek sesi bulamazsa, bulduğu ilk İngilizce sesi al
-                if (!selectedVoice) {
-                    selectedVoice = voices.find(voice => voice.lang.startsWith('en-'));
-                }
-                
-                if (selectedVoice) {
-                    utterThis.voice = selectedVoice;
-                }
-                
-                // J.A.R.V.I.S. tonunu yakalamak için kalınlaştırma (pitch) ayarı
-                utterThis.pitch = 0.4; // Sesi daha tok ve mekanik yapar
-                utterThis.rate = 1.0;  // Konuşma hızı
-                
+                let selectedVoice = voices.find(voice => voice.name.includes('Google UK English Male') || voice.name.includes('David') || voice.name.includes('Mark') || (voice.lang.startsWith('en-') && voice.name.includes('Male')));
+                if (!selectedVoice) selectedVoice = voices.find(voice => voice.lang.startsWith('en-'));
+                if (selectedVoice) utterThis.voice = selectedVoice;
+                utterThis.pitch = 0.4; utterThis.rate = 1.0; 
                 synth.speak(utterThis);
             }
         }
 
-        // Tarayıcı sesleri yüklediğinde sisteme İngilizce giriş anonsu yap
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = () => {
                 if (!voiceReady) {
-                    setTimeout(() => {
-                        speakStatus("System online. Welcome, Mustafa Ali Imre. Autonomous control activated.");
-                    }, 1000);
+                    setTimeout(() => { speakStatus("System online. Welcome, Mustafa Ali Imre. Autonomous control activated."); }, 1000);
                     voiceReady = true;
                 }
             };
         }
-        // =========================================================
-
-
-
-
-
-
 
         // =========================================================
         // [MOD-TEACH] ÖĞRET VE TEKRARLA + HAYALET YÖRÜNGE MOTORU
         // =========================================================
         const recBtn = document.getElementById('rec_btn');
         const playBtn = document.getElementById('play_btn');
-        
-        let recordedPath = [];
-        let isRecording = false;
-        let isPlaying = false;
-        let recordTimer = null;
-        let playTimer = null;
-        let playIndex = 0;
+        let recordedPath = []; let isRecording = false; let isPlaying = false; let recordTimer = null; let playTimer = null; let playIndex = 0;
 
-        // --- 🟢 HAYALET YÖRÜNGE (NEON ÇİZGİ) KURULUMU ---
-        const ghostMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2, transparent: true, opacity: 0.8 }); // Neon Turkuaz
+        const ghostMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2, transparent: true, opacity: 0.8 }); 
         let ghostGeometry = new THREE.BufferGeometry();
         let ghostLine = new THREE.Line(ghostGeometry, ghostMaterial);
-        scene.add(ghostLine); // Çizgiyi 3D sahneye ekle
+        scene.add(ghostLine); 
         let ghostPoints = [];
 
         recBtn.addEventListener('click', () => {
-            if (isPlaying) return; // Oynatırken kaydetmeyi engelle
-            
+            if (isPlaying) return; 
             if (!isRecording) {
-                // Kayda Başla
-                isRecording = true;
-                recordedPath = []; 
-                ghostPoints = [];  
+                isRecording = true; recordedPath = []; ghostPoints = [];  
+                scene.remove(ghostLine); if(ghostGeometry) ghostGeometry.dispose();
+                recBtn.innerText = "⏹️ STOP REC"; recBtn.style.background = "#8e44ad"; 
+                speakStatus("Recording trajectory."); statusText.innerText = "🔴 SYS: RECORDING..."; statusText.style.color = "#e74c3c";
                 
-                // ESKİ ÇİZGİYİ SAHNEDEN TAMAMEN SİL
-                scene.remove(ghostLine);
-                if(ghostGeometry) ghostGeometry.dispose();
-                
-                recBtn.innerText = "⏹️ STOP REC";
-                recBtn.style.background = "#8e44ad"; 
-                
-                speakStatus("Recording trajectory."); 
-                statusText.innerText = "🔴 SYS: RECORDING...";
-                statusText.style.color = "#e74c3c";
-                
-                // Saniyede 10 kez mevcut açıları ve 3D uç konumunu kaydet
                 recordTimer = setInterval(() => {
-                    // 1. Motor Açılarını Kaydet
-                    recordedPath.push({
-                        j1: angles.j1, j2: angles.j2, j3: angles.j3,
-                        j4: angles.j4, j5: angles.j5, j6: angles.j6,
-                        grip: angles.grip
-                    });
-
-                    // 2. Hayalet Çizgiyi Dinamik Olarak Yeniden Çiz
+                    recordedPath.push({ j1: angles.j1, j2: angles.j2, j3: angles.j3, j4: angles.j4, j5: angles.j5, j6: angles.j6, grip: angles.grip });
                     let currentPos = getEndEffectorPos(angles);
                     ghostPoints.push(new THREE.Vector3(currentPos.x, currentPos.y, currentPos.z));
-                    
-                    // KRİTİK DÜZELTME: Çizgiyi her adımda GPU'ya yeniden tanımla
                     scene.remove(ghostLine);
                     ghostGeometry = new THREE.BufferGeometry().setFromPoints(ghostPoints);
                     ghostLine = new THREE.Line(ghostGeometry, ghostMaterial);
                     scene.add(ghostLine);
-
                 }, 100);
             } else {
-                // Kaydı Bitir
-                isRecording = false;
-                clearInterval(recordTimer);
-                
-                recBtn.innerText = "🔴 REC";
-                recBtn.style.background = "#c0392b";
-                
+                isRecording = false; clearInterval(recordTimer);
+                recBtn.innerText = "🔴 REC"; recBtn.style.background = "#c0392b";
                 speakStatus(`Trajectory saved. ${recordedPath.length} frames recorded.`); 
-                statusText.innerText = `⏹️ SYS: SAVED (${recordedPath.length} FRAMES)`;
-                statusText.style.color = "#f1c40f";
+                statusText.innerText = `⏹️ SYS: SAVED (${recordedPath.length} FRAMES)`; statusText.style.color = "#f1c40f";
             }
         });
 
         playBtn.addEventListener('click', () => {
-            if (isRecording || recordedPath.length === 0) {
-                if(recordedPath.length === 0) speakStatus("Error. No trajectory in memory.");
-                return;
-            }
-            
+            if (isRecording || recordedPath.length === 0) { if(recordedPath.length === 0) speakStatus("Error. No trajectory in memory."); return; }
             if (!isPlaying) {
-                // Oynatmaya Başla
-                isPlaying = true;
-                playIndex = 0;
+                isPlaying = true; playIndex = 0;
+                playBtn.innerText = "⏸️ STOP PLAY"; playBtn.style.background = "#f39c12"; 
+                speakStatus("Executing autonomous playback."); statusText.innerText = "▶️ SYS: PLAYING..."; statusText.style.color = "#27ae60";
+                document.getElementById('ai_toggle').checked = false; 
                 
-                playBtn.innerText = "⏸️ STOP PLAY";
-                playBtn.style.background = "#f39c12"; 
-                
-                speakStatus("Executing autonomous playback."); 
-                statusText.innerText = "▶️ SYS: PLAYING...";
-                statusText.style.color = "#27ae60";
-                
-                document.getElementById('ai_toggle').checked = false; // El kontrolünü kapat
-                
-                // Saniyede 10 kez sıradaki kareyi robota uygula
                 playTimer = setInterval(() => {
-                    if (playIndex >= recordedPath.length) {
-                        playIndex = 0; // Başa sar (Sonsuz Döngü)
-                    }
-                    
+                    if (playIndex >= recordedPath.length) playIndex = 0; 
                     let frame = recordedPath[playIndex];
-                    
-                    // Açıları robota aktar
-                    angles.j1 = frame.j1; angles.j2 = frame.j2; angles.j3 = frame.j3;
-                    angles.j4 = frame.j4; angles.j5 = frame.j5; angles.j6 = frame.j6;
-                    angles.grip = frame.grip;
-                    
-                    // Arayüzü güncelle
+                    angles.j1 = frame.j1; angles.j2 = frame.j2; angles.j3 = frame.j3; angles.j4 = frame.j4; angles.j5 = frame.j5; angles.j6 = frame.j6; angles.grip = frame.grip;
                     let keys = ['j1','j2','j3','j4','j5','j6'];
-                    keys.forEach((k, idx) => {
-                        document.getElementById(k+'_s').value = angles[k];
-                        document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
-                    });
-                    document.getElementById('grip_s').value = angles.grip;
-                    document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
-                    
+                    keys.forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
+                    document.getElementById('grip_s').value = angles.grip; document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
                     playIndex++;
                 }, 100);
             } else {
-                // Oynatmayı Durdur
-                isPlaying = false;
-                clearInterval(playTimer);
-                
-                playBtn.innerText = "▶️ PLAY";
-                playBtn.style.background = "#27ae60";
-                
-                speakStatus("Playback stopped."); 
-                statusText.innerText = "⏸️ SYS: PLAY STOPPED";
-                statusText.style.color = "#f1c40f";
+                isPlaying = false; clearInterval(playTimer);
+                playBtn.innerText = "▶️ PLAY"; playBtn.style.background = "#27ae60";
+                speakStatus("Playback stopped."); statusText.innerText = "⏸️ SYS: PLAY STOPPED"; statusText.style.color = "#f1c40f";
             }
         });
-        // =========================================================
-
-
 
         // =========================================================
         // [MOD-HYBRID] OTONOM SESLİ ASİSTAN + YAZILI TERMİNAL
@@ -751,392 +808,150 @@ camera3d.aspect = curW / 350; camera3d.updateProjectionMatrix(); renderer.setSiz
         const micBtn = document.getElementById('mic_btn');
         const cmdBtn = document.getElementById('cmd_btn');
         const cmdInput = document.getElementById('cmd_input');
+        const memoryMap = { "küp": new THREE.Vector3(0.5, 0.4, 0.1), "daire": new THREE.Vector3(0.5, -0.4, 0.1), "silindir": new THREE.Vector3(0.0, 0.6, 0.1), "koni": new THREE.Vector3(0.0, -0.6, 0.1) };
 
-        // Ortak Uzaysal Hafıza (İki sistem de buraya bakar)
-        const memoryMap = {
-            "küp": new THREE.Vector3(0.5, 0.4, 0.1),
-            "daire": new THREE.Vector3(0.5, -0.4, 0.1),
-            "silindir": new THREE.Vector3(0.0, 0.6, 0.1),
-            "koni": new THREE.Vector3(0.0, -0.6, 0.1)
-        };
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Ortak Hedefe Yönelme ve NLP (Doğal Dil İşleme) Fonksiyonu
         function lockOnTarget(commandText, isVoice = false) {
             if(!commandText) return;
-
             statusText.innerText = (isVoice ? "🎙️ DUYULDU: " : "⌨️ KOMUT: ") + commandText.toUpperCase();
             statusText.style.color = "#3498db";
-
             let commandProcessed = false;
 
-            // =======================================================
-            // 1. KISKAÇ (UÇ İŞLEVCİ) KONTROL KOMUTLARI (SESLİ BİLDİRİM EKLENDİ)
-            // =======================================================
             if (commandText.match(/uç|üç|işlevci|işlemci|kıskaç|el|tutucu|kavrama/)) {
-                
-                if (commandText.match(/aç|bırak|sal/)) {
-                    angles.grip = 0.0;
-                    statusText.innerText = "🛠️ UÇ İŞLEVCİ: AÇILDI";
-                    speakStatus("End effector opened."); // J.A.R.V.I.S. KONUŞUYOR
-                    commandProcessed = true;
-                } 
-                else if (commandText.match(/kapat|tut|sık|al/)) {
-                    angles.grip = 0.125; // 125mm tam kapalı hali
-                    statusText.innerText = "🛠️ UÇ İŞLEVCİ: KAPATILDI";
-                    speakStatus("End effector closed."); // J.A.R.V.I.S. KONUŞUYOR
-                    commandProcessed = true;
-                }
-                
-                if(commandProcessed) {
-                    document.getElementById('grip_s').value = angles.grip;
-                    document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
-                    return; // Komut işlendi, döngüden çık
-                }
+                if (commandText.match(/aç|bırak|sal/)) { angles.grip = 0.0; statusText.innerText = "🛠️ UÇ İŞLEVCİ: AÇILDI"; speakStatus("End effector opened."); commandProcessed = true; } 
+                else if (commandText.match(/kapat|tut|sık|al/)) { angles.grip = 0.125; statusText.innerText = "🛠️ UÇ İŞLEVCİ: KAPATILDI"; speakStatus("End effector closed."); commandProcessed = true; }
+                if(commandProcessed) { document.getElementById('grip_s').value = angles.grip; document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm'; return; }
             }
 
-            // =======================================================
-            // 2. PARAMETRİK DERECE VE YÖN KOMUTLARI (SESLİ BİLDİRİM EKLENDİ)
-            // =======================================================
             const dereceMatch = commandText.match(/(\d+)\s*derece/); 
             if (dereceMatch) {
-                let derece = parseInt(dereceMatch[1]);
-                let radyan = derece * (Math.PI / 180);
-
-                if (commandText.includes("sağ")) {
-                    angles.j1 -= radyan; 
-                    statusText.innerText = `🔄 TABAN: SAĞA ${derece}°`;
-                    speakStatus(`Base turning right by ${derece} degrees.`); // J.A.R.V.I.S.
-                    commandProcessed = true;
-                } else if (commandText.includes("sol")) {
-                    angles.j1 += radyan; 
-                    statusText.innerText = `🔄 TABAN: SOLA ${derece}°`;
-                    speakStatus(`Base turning left by ${derece} degrees.`); // J.A.R.V.I.S.
-                    commandProcessed = true;
-                } else if (commandText.includes("yukarı")) {
-                    angles.j2 -= radyan; 
-                    statusText.innerText = `🔄 GÖVDE: YUKARI ${derece}°`;
-                    speakStatus(`Shoulder pitching up by ${derece} degrees.`); // J.A.R.V.I.S.
-                    commandProcessed = true;
-                } else if (commandText.includes("aşağı")) {
-                    angles.j2 += radyan; 
-                    statusText.innerText = `🔄 GÖVDE: AŞAĞI ${derece}°`;
-                    speakStatus(`Shoulder pitching down by ${derece} degrees.`); // J.A.R.V.I.S.
-                    commandProcessed = true;
-                }
+                let derece = parseInt(dereceMatch[1]); let radyan = derece * (Math.PI / 180);
+                if (commandText.includes("sağ")) { angles.j1 -= radyan; statusText.innerText = `🔄 TABAN: SAĞA ${derece}°`; speakStatus(`Base turning right by ${derece} degrees.`); commandProcessed = true; } 
+                else if (commandText.includes("sol")) { angles.j1 += radyan; statusText.innerText = `🔄 TABAN: SOLA ${derece}°`; speakStatus(`Base turning left by ${derece} degrees.`); commandProcessed = true; } 
+                else if (commandText.includes("yukarı")) { angles.j2 -= radyan; statusText.innerText = `🔄 GÖVDE: YUKARI ${derece}°`; speakStatus(`Shoulder pitching up by ${derece} degrees.`); commandProcessed = true; } 
+                else if (commandText.includes("aşağı")) { angles.j2 += radyan; statusText.innerText = `🔄 GÖVDE: AŞAĞI ${derece}°`; speakStatus(`Shoulder pitching down by ${derece} degrees.`); commandProcessed = true; }
 
                 if (commandProcessed) {
-                    angles.j1 = Math.max(-Math.PI, Math.min(Math.PI, angles.j1));
-                    angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
-
-                    document.getElementById('j1_s').value = angles.j1;
-                    document.getElementById('v1').innerText = (angles.j1 * 180/Math.PI).toFixed(2) + '°';
-                    document.getElementById('j2_s').value = angles.j2;
-                    document.getElementById('v2').innerText = (angles.j2 * 180/Math.PI).toFixed(2) + '°';
-                    
-                    document.getElementById('ai_toggle').checked = false; 
-                    return; 
+                    angles.j1 = Math.max(-Math.PI, Math.min(Math.PI, angles.j1)); angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
+                    document.getElementById('j1_s').value = angles.j1; document.getElementById('v1').innerText = (angles.j1 * 180/Math.PI).toFixed(2) + '°';
+                    document.getElementById('j2_s').value = angles.j2; document.getElementById('v2').innerText = (angles.j2 * 180/Math.PI).toFixed(2) + '°';
+                    document.getElementById('ai_toggle').checked = false; return; 
                 }
             }
 
-            // =======================================================
-            // 3. UZAYSAL HAFIZA KOMUTLARI (IK) (SESLİ BİLDİRİM EKLENDİ)
-            // =======================================================
             for (const [objectName, targetCoords] of Object.entries(memoryMap)) {
                 if (commandText.includes(objectName)) {
-                    statusText.innerText = "🚀 HEDEF: " + objectName.toUpperCase();
-                    statusText.style.color = "#e67e22";
-                    
-                    speakStatus(`${objectName} hedefine yöneliyorum.`); // J.A.R.V.I.S.
-                    
-                    document.getElementById('tX').value = targetCoords.x.toFixed(3);
-                    document.getElementById('tY').value = targetCoords.y.toFixed(3);
-                    document.getElementById('tZ').value = targetCoords.z.toFixed(3);
-                    
-                    document.getElementById('ai_toggle').checked = false; 
-                    solveIK(); // Ters Kinematiği tetikle
-                    commandProcessed = true;
-                    break;
+                    statusText.innerText = "🚀 HEDEF: " + objectName.toUpperCase(); statusText.style.color = "#e67e22";
+                    speakStatus(`${objectName} hedefine yöneliyorum.`); 
+                    document.getElementById('tX').value = targetCoords.x.toFixed(3); document.getElementById('tY').value = targetCoords.y.toFixed(3); document.getElementById('tZ').value = targetCoords.z.toFixed(3);
+                    document.getElementById('ai_toggle').checked = false; solveIK(); commandProcessed = true; break;
                 }
             }
 
-            
-
-            // =======================================================
-            // 4. BİLİNMEYEN KOMUT (SESLİ HATA BİLDİRİMİ)
-            // =======================================================
-            if(!commandProcessed) {
-                statusText.innerText = "❌ KOMUT ANLAŞILAMADI";
-                statusText.style.color = "#e74c3c";
-                speakStatus("Command not recognized. Please repeat."); // J.A.R.V.I.S.
-            }
+            if(!commandProcessed) { statusText.innerText = "❌ KOMUT ANLAŞILAMADI"; statusText.style.color = "#e74c3c"; speakStatus("Command not recognized. Please repeat."); }
         }
 
-
-
-
-
-
-
-
-
-
         // =========================================================
-        // [MOD-SAFETY] ENDÜSTRİYEL GÜVENLİK VE LİMİT KONTROLÖRÜ (SAFETY PLC)
+        // [MOD-SAFETY] ENDÜSTRİYEL GÜVENLİK VE LİMİT KONTROLÖRÜ
         // =========================================================
         let isSafetyLockActive = false;
-
         setInterval(() => {
-            let limitBreached = false;
-            let breachedJoint = "";
-
-            // Omuz Eklemi (J2) Güvenlik Sınırı: -90° ile +90° arası (-1.57, 1.57 radyan)
+            let limitBreached = false; let breachedJoint = "";
             if (angles.j2 > 1.57) { angles.j2 = 1.57; limitBreached = true; breachedJoint = "Shoulder"; }
             if (angles.j2 < -1.57) { angles.j2 = -1.57; limitBreached = true; breachedJoint = "Shoulder"; }
-
-            // Dirsek Eklemi (J3) Güvenlik Sınırı: -140° ile +140° arası (-2.45, 2.45 radyan)
             if (angles.j3 > 2.45) { angles.j3 = 2.45; limitBreached = true; breachedJoint = "Elbow"; }
             if (angles.j3 < -2.45) { angles.j3 = -2.45; limitBreached = true; breachedJoint = "Elbow"; }
-
-            // Taban (J1) Güvenlik Sınırı: Kablo kopmasını önlemek için ±160° (-2.8, 2.8 radyan)
             if (angles.j1 > 2.8) { angles.j1 = 2.8; limitBreached = true; breachedJoint = "Base"; }
             if (angles.j1 < -2.8) { angles.j1 = -2.8; limitBreached = true; breachedJoint = "Base"; }
-
-            // Bilek (J5) Güvenlik Sınırı: ±90°
             if (angles.j5 > 1.57) { angles.j5 = 1.57; limitBreached = true; breachedJoint = "Wrist"; }
             if (angles.j5 < -1.57) { angles.j5 = -1.57; limitBreached = true; breachedJoint = "Wrist"; }
 
-            // EĞER LİMİT AŞILDIYSA (ACİL DURUM PROTOKOLÜ)
             if (limitBreached) {
-                // Arayüzdeki slider'ları güvenli limite geri çek
                 let keys = ['j1','j2','j3','j4','j5','j6'];
-                keys.forEach((k, idx) => {
-                    document.getElementById(k+'_s').value = angles[k];
-                    document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°';
-                });
-
-                // Spama düşmemek için sadece ilk ihlal anında uyarı ver
+                keys.forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
                 if (!isSafetyLockActive) {
                     isSafetyLockActive = true;
-                    
-                    // Otonom hareketleri (AI ve Play) acil durdurma
                     document.getElementById('ai_toggle').checked = false;
-                    if (typeof isPlaying !== 'undefined' && isPlaying) {
-                        document.getElementById('play_btn').click(); // Oynatmayı durdur
-                    }
-
-                    // Arayüzü Kırmızıya Boya ve Uyarı Ver
-                    statusText.innerText = `🚨 E-STOP: ${breachedJoint.toUpperCase()} LIMIT BREACH!`;
-                    statusText.style.color = "#c0392b";
+                    if (typeof isPlaying !== 'undefined' && isPlaying) document.getElementById('play_btn').click(); 
+                    statusText.innerText = `🚨 E-STOP: ${breachedJoint.toUpperCase()} LIMIT BREACH!`; statusText.style.color = "#c0392b";
                     speakStatus(`Warning. Critical limit breached at ${breachedJoint} joint. Emergency stop activated.`);
-                    
-                    // 3 Saniye sonra güvenlik kilidini normale döndür
-                    setTimeout(() => {
-                        isSafetyLockActive = false;
-                        statusText.innerText = "✅ SYS: SAFETY LOCK CLEARED";
-                        statusText.style.color = "#27ae60";
-                    }, 3000);
+                    setTimeout(() => { isSafetyLockActive = false; statusText.innerText = "✅ SYS: SAFETY LOCK CLEARED"; statusText.style.color = "#27ae60"; }, 3000);
                 }
             }
-        }, 100); // Saniyede 10 kez denetle
-        // =========================================================
-
-
+        }, 100); 
 
         // =========================================================
-        // [MOD-WORKSPACE] 3B ERİŞİM KÜRESİ GÖRSELLEŞTİRİCİ (DÜZELTİLMİŞ YARIM KÜRE)
+        // [MOD-WORKSPACE] 3B ERİŞİM KÜRESİ GÖRSELLEŞTİRİCİ
         // =========================================================
         const workspaceBtn = document.getElementById('workspace_btn');
-
-        // Yarıçapı tam olarak IK motorumuzun limiti olan 0.95 metre yapıyoruz
-        // Üst yarım küreyi varsayılan Y-yukarı eksenine göre kesiyoruz.
-        // thetaStart: 0 (Kuzey Kutbu = +Y), thetaLength: Math.PI / 2 (Ekvator = XZ Düzlemi)
         const wsGeometry = new THREE.SphereGeometry(0.95, 32, 24, 0, Math.PI * 2, 0, Math.PI / 2); 
-        
-        // Profesyonel endüstriyel tel kafes (Wireframe) materyali
-        const wsMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x3498db, // Teknolojik Mavi
-            wireframe: true, 
-            transparent: true, 
-            opacity: 0.15 
-        });
-
+        const wsMaterial = new THREE.MeshBasicMaterial({ color: 0x3498db, wireframe: true, transparent: true, opacity: 0.15 });
         const workspaceSphere = new THREE.Mesh(wsGeometry, wsMaterial);
-        
-        // Kürenin merkezini robotun tabanına sabitliyoruz
-        workspaceSphere.position.set(0, 0, 0); 
-        workspaceSphere.visible = false; // Başlangıçta gizli
-
-        // --- KRİTİK DÜZELTME: ROS/MÜHENDİSLİK Z-YUKARI EKSENİNE HİZALAMA ---
-        // Üst yarım küre varsayılan Y-yukarı eksenine bakar.
-        // Robotumuz Z-yukarı'ya hizalanmışsa (ROS standardı), küreyi X ekseni etrafında -90 derece döndürerek Z-yukarı'ya hizalamalıyız.
-        workspaceSphere.rotation.x = Math.PI / 2; 
-
+        workspaceSphere.position.set(0, 0, 0); workspaceSphere.visible = false; workspaceSphere.rotation.x = Math.PI / 2; 
         scene.add(workspaceSphere);
 
         let isWorkspaceVisible = false;
-
         workspaceBtn.addEventListener('click', () => {
             isWorkspaceVisible = !isWorkspaceVisible;
             workspaceSphere.visible = isWorkspaceVisible;
-            
             if (isWorkspaceVisible) {
-                workspaceBtn.innerText = "🌐 WORKSPACE GİZLE";
-                workspaceBtn.style.background = "#e67e22"; // Turuncu uyarı rengi
-                
-                speakStatus("Workspace boundary visualization activated."); // J.A.R.V.I.S.
-                statusText.innerText = "🌐 SYS: WORKSPACE VISIBLE";
-                statusText.style.color = "#3498db";
+                workspaceBtn.innerText = "🌐 WORKSPACE GİZLE"; workspaceBtn.style.background = "#e67e22"; 
+                speakStatus("Workspace boundary visualization activated."); statusText.innerText = "🌐 SYS: WORKSPACE VISIBLE"; statusText.style.color = "#3498db";
             } else {
-                workspaceBtn.innerText = "🌐 WORKSPACE GÖSTER";
-                workspaceBtn.style.background = "#2980b9";
-                
-                speakStatus("Workspace boundary visualization deactivated."); // J.A.R.V.I.S.
-                statusText.innerText = "🌐 SYS: WORKSPACE HIDDEN";
-                statusText.style.color = "#bdc3c7";
+                workspaceBtn.innerText = "🌐 WORKSPACE GÖSTER"; workspaceBtn.style.background = "#2980b9";
+                speakStatus("Workspace boundary visualization deactivated."); statusText.innerText = "🌐 SYS: WORKSPACE HIDDEN"; statusText.style.color = "#bdc3c7";
             }
         });
-        // =========================================================
-
-
-
-
 
         // =========================================================
-        // [MOD-AXES] HER EKLEM İÇİN YEREL EKSENLER (FORWARD KINEMATICS FRAMES)
+        // [MOD-AXES] HER EKLEM İÇİN YEREL EKSENLER
         // =========================================================
         const axesBtn = document.getElementById('axes_btn');
-
-        // Tüm eksenleri tek tuşla yönetmek için bir dizi oluşturuyoruz
         let allAxes = [];
+        const baseAxes = new THREE.AxesHelper(0.8); baseAxes.rotation.x = -Math.PI / 2; baseAxes.position.set(0, 0, 0); baseAxes.visible = false;
+        scene.add(baseAxes); allAxes.push(baseAxes);
 
-        // 1. ANA TABAN EKSENİ (Global World Frame) - 0.8m, Yere Sabit
-        const baseAxes = new THREE.AxesHelper(0.8); 
-        baseAxes.rotation.x = -Math.PI / 2; // ROS Z-Yukarı Standardı
-        baseAxes.position.set(0, 0, 0); 
-        baseAxes.visible = false;
-        scene.add(baseAxes);
-        allAxes.push(baseAxes);
-
-        // 2. YEREL EKLEM EKSENLERİNİ (Local Frames) OTOMATİK BUL VE EKLE
-        // Sahnedeki tüm objeleri tarar ve robot parçası olanlara 0.3m'lik küçük eksenler takar.
-        // Not: Eğer robotunun parçaları özel isimlere sahipse (örneğin 'omuz', 'dirsek'),
-        // aşağıdaki .includes() metodunun içine o isimleri de ekleyebilirsin.
-        // 2. YEREL EKLEM EKSENLERİNİ DOĞRUDAN DEĞİŞKENLERE BAĞLA
-        // Kodundaki pivot (dönüş) noktalarının gerçek değişken isimlerini kullanıyoruz:
         const robotJoints = [j1P, j2P, j3P, j4P, j5P, j6P, gripBase];
-
         robotJoints.forEach(joint => {
             if (joint) {
-                const localAxis = new THREE.AxesHelper(0.3); // Eklemlere 30 cm'lik oklar
-                localAxis.visible = false; 
-                
-                // Ekseni doğrudan senin 3D değişkeninin içine gömüyoruz!
-                joint.add(localAxis); 
-                allAxes.push(localAxis);
+                const localAxis = new THREE.AxesHelper(0.3); localAxis.visible = false; 
+                joint.add(localAxis); allAxes.push(localAxis);
             }
-        }); // Modelin sahneye yüklenmesi için 2 saniye bekleme payı
+        }); 
 
         let isAxesVisible = false;
-
         axesBtn.addEventListener('click', () => {
             isAxesVisible = !isAxesVisible;
-            
-            // Dizideki tüm eksenleri (Ana taban + Tüm eklemler) aç/kapat
-            allAxes.forEach(axis => {
-                axis.visible = isAxesVisible;
-            });
-            
+            allAxes.forEach(axis => { axis.visible = isAxesVisible; });
             if (isAxesVisible) {
-                axesBtn.innerText = "📌 EKSENLERİ GİZLE";
-                axesBtn.style.background = "#c0392b"; // Aktif
-                
-                speakStatus("Local kinematic frames activated. Displaying Denavit-Hartenberg parameters."); 
-                statusText.innerText = "📌 SYS: KINEMATIC FRAMES VISIBLE";
-                statusText.style.color = "#9b59b6";
+                axesBtn.innerText = "📌 EKSENLERİ GİZLE"; axesBtn.style.background = "#c0392b"; 
+                speakStatus("Local kinematic frames activated. Displaying Denavit-Hartenberg parameters."); statusText.innerText = "📌 SYS: KINEMATIC FRAMES VISIBLE"; statusText.style.color = "#9b59b6";
             } else {
-                axesBtn.innerText = "📌 EKSENLERİ GÖSTER (J1-J6)";
-                axesBtn.style.background = "#8e44ad"; // Pasif
-                
-                speakStatus("Kinematic frames deactivated."); 
-                statusText.innerText = "📌 SYS: FRAMES HIDDEN";
-                statusText.style.color = "#bdc3c7";
+                axesBtn.innerText = "📌 EKSENLERİ GÖSTER (X-Y-Z)"; axesBtn.style.background = "#8e44ad"; 
+                speakStatus("Kinematic frames deactivated."); statusText.innerText = "📌 SYS: FRAMES HIDDEN"; statusText.style.color = "#bdc3c7";
             }
         });
+
         // =========================================================
-
-
-
-
-
-
-
-        // --- 1. TERMİNAL (YAZILI) KONTROLÜ ---
-        function executeCommand() {
-            lockOnTarget(cmdInput.value.trim().toLowerCase(), false);
-            cmdInput.value = ""; 
-        }
+        // TERMİNAL (YAZILI) KONTROLÜ
+        // =========================================================
+        function executeCommand() { lockOnTarget(cmdInput.value.trim().toLowerCase(), false); cmdInput.value = ""; }
         cmdBtn.addEventListener('click', executeCommand);
-        cmdInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') executeCommand();
-        });
+        cmdInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') executeCommand(); });
 
-        // --- 2. SES (VOICE) KONTROLÜ ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'tr-TR'; 
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            micBtn.addEventListener('click', () => {
-                recognition.start();
-                micBtn.style.background = "#2ecc71";
-                micBtn.style.borderColor = "#27ae60";
-                micBtn.innerText = "🎧 DİNLİYOR...";
-            });
-
+            const recognition = new SpeechRecognition(); recognition.lang = 'tr-TR'; recognition.continuous = false; recognition.interimResults = false;
+            micBtn.addEventListener('click', () => { recognition.start(); micBtn.style.background = "#2ecc71"; micBtn.style.borderColor = "#27ae60"; micBtn.innerText = "🎧 DİNLİYOR..."; });
             recognition.onresult = (event) => {
                 const command = event.results[0][0].transcript.trim().toLowerCase();
-                
-                micBtn.style.background = "#c0392b";
-                micBtn.style.borderColor = "#e74c3c";
-                micBtn.innerText = "🎙️ START MIC";
-                
-                lockOnTarget(command, true); // Sesli komutu ortak fonksiyona gönder
+                micBtn.style.background = "#c0392b"; micBtn.style.borderColor = "#e74c3c"; micBtn.innerText = "🎙️ START MIC";
+                lockOnTarget(command, true); 
             };
-
-            recognition.onspeechend = () => {
-                recognition.stop();
-                micBtn.style.background = "#c0392b";
-                micBtn.style.borderColor = "#e74c3c";
-                micBtn.innerText = "🎙️ START MIC";
-            };
-
-            recognition.onerror = (event) => {
-                console.log("Ses Hatası: ", event.error);
-                micBtn.style.background = "#c0392b";
-                micBtn.innerText = "❌ HATA: " + event.error;
-            };
+            recognition.onspeechend = () => { recognition.stop(); micBtn.style.background = "#c0392b"; micBtn.style.borderColor = "#e74c3c"; micBtn.innerText = "🎙️ START MIC"; };
+            recognition.onerror = (event) => { console.log("Ses Hatası: ", event.error); micBtn.style.background = "#c0392b"; micBtn.innerText = "❌ HATA: " + event.error; };
         } else {
-            micBtn.innerText = "❌ DESTEKLENMİYOR";
-            micBtn.disabled = true;
+            micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
         }
-        // =========================================================
     </script>
 </body>
 </html>
