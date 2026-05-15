@@ -1,0 +1,42 @@
+[0.016s] Invoking command in '/home/main/rokisim_ws/build/rokisim_core': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake /home/main/rokisim_ws/src/rokisim_core -DCMAKE_INSTALL_PREFIX=/home/main/rokisim_ws/install/rokisim_core
+[0.128s] -- The C compiler identification is GNU 11.4.0
+[0.207s] -- The CXX compiler identification is GNU 11.4.0
+[0.220s] -- Detecting C compiler ABI info
+[0.273s] -- Detecting C compiler ABI info - done
+[0.278s] -- Check for working C compiler: /usr/lib/ccache/cc - skipped
+[0.278s] -- Detecting C compile features
+[0.279s] -- Detecting C compile features - done
+[0.282s] -- Detecting CXX compiler ABI info
+[0.346s] -- Detecting CXX compiler ABI info - done
+[0.353s] -- Check for working CXX compiler: /usr/lib/ccache/c++ - skipped
+[0.353s] -- Detecting CXX compile features
+[0.353s] -- Detecting CXX compile features - done
+[0.359s] -- Found ament_cmake: 1.3.14 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.530s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.636s] -- Found ament_lint_auto: 0.12.15 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[0.716s] -- Added test 'lint_cmake' to check CMake code style
+[0.718s] -- Added test 'xmllint' to check XML markup files
+[0.719s] -- Configuring done
+[0.721s] -- Generating done
+[0.722s] -- Build files have been written to: /home/main/rokisim_ws/build/rokisim_core
+[0.725s] Invoked command in '/home/main/rokisim_ws/build/rokisim_core' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake /home/main/rokisim_ws/src/rokisim_core -DCMAKE_INSTALL_PREFIX=/home/main/rokisim_ws/install/rokisim_core
+[0.727s] Invoking command in '/home/main/rokisim_ws/build/rokisim_core': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --build /home/main/rokisim_ws/build/rokisim_core -- -j12 -l12
+[0.762s] Invoked command in '/home/main/rokisim_ws/build/rokisim_core' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --build /home/main/rokisim_ws/build/rokisim_core -- -j12 -l12
+[0.762s] Invoking command in '/home/main/rokisim_ws/build/rokisim_core': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --install /home/main/rokisim_ws/build/rokisim_core
+[0.769s] -- Install configuration: ""
+[0.769s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/ament_index/resource_index/package_run_dependencies/rokisim_core
+[0.769s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/ament_index/resource_index/parent_prefix_path/rokisim_core
+[0.769s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/ament_prefix_path.sh
+[0.769s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/ament_prefix_path.dsv
+[0.769s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/path.sh
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/environment/path.dsv
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.bash
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.sh
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.zsh
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/local_setup.dsv
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.dsv
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/ament_index/resource_index/packages/rokisim_core
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/cmake/rokisim_coreConfig.cmake
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/cmake/rokisim_coreConfig-version.cmake
+[0.770s] -- Installing: /home/main/rokisim_ws/install/rokisim_core/share/rokisim_core/package.xml
+[0.775s] Invoked command in '/home/main/rokisim_ws/build/rokisim_core' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/main/circ_ws/install/circ_autonomy:/home/main/ros2_sablon_ws/install/temel_paket:/home/main/real_rover_ws/install/rover_description:/home/main/real_rover_ws/install/rover_bringup:/home/main/real_rover_ws_gi/install/rover_kamera:/home/main/real_rover_ws_gi/install/gesture_control:/home/main/ros2_ws_tank/install/tank_bot_sim:/home/main/ros2_ws_5/install/vision_pkg:/home/main/ros2_ws_4/install/benim_ilk_paketim:/home/main/ros2_ws_1/install/lidar_py_pkg:/home/main/ros2_ws3/install/simple_py_pkg:/home/main/turtlesim_ws3/install/turtlesim_py_pkg:/opt/ros/humble /usr/bin/cmake --install /home/main/rokisim_ws/build/rokisim_core

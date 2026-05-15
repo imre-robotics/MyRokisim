@@ -32,7 +32,17 @@ Sistem, maksimum performans ve donanım erişimi için **Electron.js** kabuğu i
 
 ---
 
-## 🚀 Kurulum ve Başlatma
+## � Bu Sürümde Yapılan Değişiklikler
+
+* `src/rokisim_gazebo/web/app.js` içinde 3D Dijital İkiz sahnesi için başlatma ve animasyon sıralaması düzeltildi.
+* `setupWorkspaceAndAxes()` fonksiyonu, sahne objesi oluşturulduktan sonra çağrılacak şekilde yeniden düzenlendi.
+* `openGazeboWindow()` ile Gazebo butonu artık ayrı bir pencere veya sekme açmaya yönelik çalışacak şekilde ayarlandı.
+* `src/rokisim_gazebo/web/styles.css` içinde 3D panel yüksekliği artırıldı ve alt siyah alan daha koyu, daha dolu görünmesi için güncellendi.
+* UI panel düzeni iyileştirildi; 3D robot ekranı daha geniş görünür hale getirildi.
+
+---
+
+## �🚀 Kurulum ve Başlatma
 
 Bu projeyi yerel makinenizde çalıştırmak için sisteminizde [Node.js](https://nodejs.org/) yüklü olması gerekmektedir. (ROS 2 / Gazebo kurulumu isteğe bağlıdır, yazılım yerel modda da çalışır).
 
@@ -40,3 +50,16 @@ Bu projeyi yerel makinenizde çalıştırmak için sisteminizde [Node.js](https:
 ```bash
 git clone [https://github.com/imre-robotics/RoKiSim.git](https://github.com/imre-robotics/RoKiSim.git)
 cd RoKiSim
+```
+
+### 2. Bağımlılıkları Kurun
+```bash
+npm install
+```
+
+### 3. Uygulamayı Başlatın
+```bash
+npm start
+```
+
+> Not: Bu sürüm `main.js` üzerinde güvenli Electron yapılandırması ile çalışır; `nodeIntegration` devre dışı bırakıldı ve `contextIsolation` etkinleştirildi.

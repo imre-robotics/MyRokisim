@@ -27,7 +27,7 @@
 <div class="visual-column">
 <div style="display: flex; gap: 10px; align-items: center;">
 <h3 style="flex: 1; margin: 0; color: #e67e22;">DIJITAL İKİZ BÖLÜMÜ</h3>
-<button id="toggle_gazebo_btn" style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 12px;" onclick="toggleGazeboView()">👁️ CAM-01 GÖRÜNTÜSÜNÜ GÖSTER</button>
+<button id="toggle_gazebo_btn" style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 12px;" onclick="openGazeboWindow()">👁️ GAZEBO PENCERESİNİ AÇ</button>
 </div>
 <div class="view-panel" id="gazebo-panel" style="display: none; flex: 0; min-height: 200px;">
 <h3>[CAM-01] Gazebo Physics Engine</h3>
@@ -39,7 +39,7 @@
 <img id="gazebo-cam" src="http://localhost:8080/stream?topic=/kamera/kamera_sensor/image_raw&type=mjpeg&quality=80" alt="Gazebo Kamerası">
 </div>
 </div>
-<div class="view-panel">
+<div class="view-panel view-panel-large">
 <h3>[SYS-01] 3D Digital Twin (Local Engine)</h3>
 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
 <label style="color: #ccc; font-size: 11px; display: flex; align-items: center;">

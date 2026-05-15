@@ -27,92 +27,118 @@ var angles = { j1:0, j2:0, j3:0, j4:0, j5:0, j6:0, grip:0, cam:0 };
 const gazeboCam = document.getElementById('gazebo-cam');
 const offlineLayer = document.getElementById('cam-offline-layer');
 if(gazeboCam && offlineLayer) {
-gazeboCam.onload = () => { gazeboCam.style.opacity = 1; offlineLayer.style.display = 'none'; };
-gazeboCam.onerror = () => { gazeboCam.style.opacity = 0; offlineLayer.style.display = 'flex'; };
+    gazeboCam.onload = () => { gazeboCam.style.opacity = 1; offlineLayer.style.display = 'none'; };
+    gazeboCam.onerror = () => { gazeboCam.style.opacity = 0; offlineLayer.style.display = 'flex'; };
 }
 
 // --- 3D KURULUM (GLOBAL SCOPE) ---
 THREE.Object3D.DefaultUp.set(0, 0, 1);
-const container = document.getElementById('canvas3d-container');
-const cW = container.getBoundingClientRect().width || 500;
-const cH = container.getBoundingClientRect().height || 400;
+let container, scene, camera3d, renderer, orbitCtrl;
+let robotBase, j1P, j2P, j3P, j4P, j5P, j6P, gripBase, gripperLeftFinger, gripperRightFinger;
+let gripM = { updateGripperPosition: function() {} };
 
 // ORTAM (ENVIRONMENT) SEÇİMLERİ
 const environments = {
-	default: { name: 'Varsayılan', color: 0x1a1a1a },
-	lab: { name: 'Laboratuvar', color: 0x0a2540 },
-	kitchen: { name: 'Mutfak', color: 0x3d2817 },
-	office: { name: 'Çalışma Masası', color: 0x2a2a2a },
-	outdoor: { name: 'Açık Alan', color: 0x87ceeb }
+    default: { name: 'Varsayılan', color: 0x1a1a1a },
+    lab: { name: 'Laboratuvar', color: 0x0a2540 },
+    kitchen: { name: 'Mutfak', color: 0x3d2817 },
+    office: { name: 'Çalışma Masası', color: 0x2a2a2a },
+    outdoor: { name: 'Açık Alan', color: 0x87ceeb }
 };
 let currentEnvironment = 'default';
 
-const scene = new THREE.Scene(); scene.background = new THREE.Color(environments[currentEnvironment].color); 
-const camera3d = new THREE.PerspectiveCamera(45, cW / cH, 0.1, 100);
-camera3d.position.set(1.5, -1.5, 1.2); 
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setSize(cW, cH); container.appendChild(renderer.domElement);
-const orbitCtrl = new THREE.OrbitControls(camera3d, renderer.domElement);
+function initDigitalTwin() {
+    container = document.getElementById('canvas3d-container');
+    if (!container) {
+        console.error('Digital twin container bulunamadı.');
+        return;
+    }
 
-const grid = new THREE.GridHelper(2, 20, 0x444444, 0x222222);
-grid.rotation.x = Math.PI / 2;
-scene.add(grid);
-scene.add(new THREE.AxesHelper(0.5));
+    const cW = Math.max(500, container.clientWidth || 500);
+    const cH = Math.max(400, container.clientHeight || 400);
 
-const matGrey = new THREE.MeshPhongMaterial({color: 0x3a3a3a}); 
-const matOrange = new THREE.MeshPhongMaterial({color: 0xd35400});
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(environments[currentEnvironment].color);
+    camera3d = new THREE.PerspectiveCamera(45, cW / cH, 0.1, 100);
+    camera3d.position.set(1.5, -1.5, 1.2);
 
-const robotBase = new THREE.Group(); scene.add(robotBase);
-const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05), matGrey); baseMesh.rotation.x = Math.PI / 2; baseMesh.position.z = 0.025; robotBase.add(baseMesh);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(cW, cH);
+    container.innerHTML = '';
+    container.appendChild(renderer.domElement);
 
-const j1P = new THREE.Group(); j1P.position.set(0, 0, 0.05); robotBase.add(j1P);
-const l1M = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2), matOrange); l1M.rotation.x = Math.PI / 2; l1M.position.z = 0.1; j1P.add(l1M);
+    orbitCtrl = new THREE.OrbitControls(camera3d, renderer.domElement);
+    orbitCtrl.enableDamping = true;
+    orbitCtrl.dampingFactor = 0.05;
 
-const j2P = new THREE.Group(); j2P.position.set(0, 0, 0.2); j1P.add(j2P);
-const l2M = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4), matGrey); l2M.rotation.x = Math.PI / 2; l2M.position.z = 0.2; j2P.add(l2M);
+    const grid = new THREE.GridHelper(2, 20, 0x444444, 0x222222);
+    grid.rotation.x = Math.PI / 2;
+    scene.add(grid);
+    scene.add(new THREE.AxesHelper(0.5));
 
-const j3P = new THREE.Group(); j3P.position.set(0, 0, 0.4); j2P.add(j3P);
-const l3M = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), matOrange); l3M.rotation.x = Math.PI / 2; l3M.position.z = 0.15; j3P.add(l3M);
+    const matGrey = new THREE.MeshPhongMaterial({ color: 0x3a3a3a });
+    const matOrange = new THREE.MeshPhongMaterial({ color: 0xd35400 });
 
-const j4P = new THREE.Group(); j4P.position.set(0, 0, 0.3); j3P.add(j4P);
-const l4M = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1), matGrey); l4M.rotation.x = Math.PI / 2; l4M.position.z = 0.05; j4P.add(l4M);
+    robotBase = new THREE.Group(); scene.add(robotBase);
+    const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05), matGrey);
+    baseMesh.rotation.x = Math.PI / 2; baseMesh.position.z = 0.025; robotBase.add(baseMesh);
 
-const j5P = new THREE.Group(); j5P.position.set(0, 0, 0.1); j4P.add(j5P);
-const l5M = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1), matOrange); l5M.rotation.x = Math.PI / 2; l5M.position.z = 0.05; j5P.add(l5M);
+    j1P = new THREE.Group(); j1P.position.set(0, 0, 0.05); robotBase.add(j1P);
+    const l1M = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2), matOrange); l1M.rotation.x = Math.PI / 2; l1M.position.z = 0.1; j1P.add(l1M);
 
-const j6P = new THREE.Group(); j6P.position.set(0, 0, 0.1); j5P.add(j6P);
-const l6M = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05), matGrey); l6M.rotation.x = Math.PI / 2; l6M.position.z = 0.025; j6P.add(l6M);
+    j2P = new THREE.Group(); j2P.position.set(0, 0, 0.2); j1P.add(j2P);
+    const l2M = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4), matGrey); l2M.rotation.x = Math.PI / 2; l2M.position.z = 0.2; j2P.add(l2M);
 
-const gripBase = new THREE.Group(); gripBase.position.set(0, 0, 0.05); j6P.add(gripBase);
+    j3P = new THREE.Group(); j3P.position.set(0, 0, 0.4); j2P.add(j3P);
+    const l3M = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), matOrange); l3M.rotation.x = Math.PI / 2; l3M.position.z = 0.15; j3P.add(l3M);
 
-// MEKANIK GRIPPER - Paralel Çene Mekanizması
-const gripMountBase = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.08), new THREE.MeshPhongMaterial({color: 0x555555})); 
-gripMountBase.position.z = 0.04; gripBase.add(gripMountBase);
+    j4P = new THREE.Group(); j4P.position.set(0, 0, 0.3); j3P.add(j4P);
+    const l4M = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1), matGrey); l4M.rotation.x = Math.PI / 2; l4M.position.z = 0.05; j4P.add(l4M);
 
-// SOL ÇENE (Sol finger)
-const gripperLeftFinger = new THREE.Group(); gripperLeftFinger.position.set(0, 0, 0.04); gripBase.add(gripperLeftFinger);
-const leftFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.06), matOrange);
-leftFingerMesh.position.set(-0.025, 0, 0.03);
-gripperLeftFinger.add(leftFingerMesh);
+    j5P = new THREE.Group(); j5P.position.set(0, 0, 0.1); j4P.add(j5P);
+    const l5M = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1), matOrange); l5M.rotation.x = Math.PI / 2; l5M.position.z = 0.05; j5P.add(l5M);
 
-// SAĞ ÇENE (Sağ finger)
-const gripperRightFinger = new THREE.Group(); gripperRightFinger.position.set(0, 0, 0.04); gripBase.add(gripperRightFinger);
-const rightFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.06), matOrange);
-rightFingerMesh.position.set(0.025, 0, 0.03);
-gripperRightFinger.add(rightFingerMesh);
+    j6P = new THREE.Group(); j6P.position.set(0, 0, 0.1); j5P.add(j6P);
+    const l6M = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05), matGrey); l6M.rotation.x = Math.PI / 2; l6M.position.z = 0.025; j6P.add(l6M);
 
-// GRIPPER KONTROLÜ: angles.grip değeri 0-0.125 aralığında çeneleri açar/kapar
-const gripM = { // Dummy object for compatibility
-	updateGripperPosition: function(gripValue) {
-		// gripValue: 0 = açık, 0.125 = kapalı
-		let fingerOffset = 0.04 * (1 - gripValue / 0.125); // Açılırken ayrılır
-		gripperLeftFinger.position.x = -fingerOffset;
-		gripperRightFinger.position.x = fingerOffset;
-	}
-};
+    gripBase = new THREE.Group(); gripBase.position.set(0, 0, 0.05); j6P.add(gripBase);
 
-const light = new THREE.DirectionalLight(0xffffff, 1); light.position.set(5, 5, 10); scene.add(light);
-scene.add(new THREE.AmbientLight(0x404040));
+    const gripMountBase = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.08), new THREE.MeshPhongMaterial({ color: 0x555555 }));
+    gripMountBase.position.z = 0.04; gripBase.add(gripMountBase);
+
+    gripperLeftFinger = new THREE.Group(); gripperLeftFinger.position.set(0, 0, 0.04); gripBase.add(gripperLeftFinger);
+    const leftFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.06), matOrange);
+    leftFingerMesh.position.set(-0.025, 0, 0.03); gripperLeftFinger.add(leftFingerMesh);
+
+    gripperRightFinger = new THREE.Group(); gripperRightFinger.position.set(0, 0, 0.04); gripBase.add(gripperRightFinger);
+    const rightFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.06), matOrange);
+    rightFingerMesh.position.set(0.025, 0, 0.03); gripperRightFinger.add(rightFingerMesh);
+
+    gripM = {
+        updateGripperPosition: function(gripValue) {
+            let fingerOffset = 0.04 * (1 - gripValue / 0.125);
+            gripperLeftFinger.position.x = -fingerOffset;
+            gripperRightFinger.position.x = fingerOffset;
+        }
+    };
+
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 5, 10);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x404040));
+
+    ghostLine = new THREE.Line(ghostGeometry, ghostMaterial);
+    scene.add(ghostLine);
+    ghostPoints = [];
+
+    setupWorkspaceAndAxes();
+    animate3D();
+}
+
+window.addEventListener('load', () => {
+    initDigitalTwin();
+});
 
 let currentEuler = new THREE.Euler();
 let currentQuat = new THREE.Quaternion();
@@ -328,7 +354,6 @@ document.getElementById('math_roll').innerText = `ROLL : ${(currentEuler.x * 180
 document.getElementById('math_pitch').innerText = `PITCH: ${(currentEuler.y * 180/Math.PI).toFixed(1)}°`;
 document.getElementById('math_yaw').innerText = `YAW : ${(currentEuler.z * 180/Math.PI).toFixed(1)}°`;
 }
-animate3D(); 
 
 window.addEventListener('resize', () => { 
 let curW = container.getBoundingClientRect().width || 500;
@@ -510,9 +535,8 @@ let recordedPath = []; let isRecording = false; let isPlaying = false; let recor
 
 const ghostMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2, transparent: true, opacity: 0.8 }); 
 let ghostGeometry = new THREE.BufferGeometry();
-let ghostLine = new THREE.Line(ghostGeometry, ghostMaterial);
-scene.add(ghostLine); 
-let ghostPoints = [];
+let ghostLine;
+let ghostPoints = []; 
 
 recBtn.addEventListener('click', () => {
 if (isPlaying) return; 
@@ -639,56 +663,81 @@ setTimeout(() => { isSafetyLockActive = false; statusText.innerText = "✅ SYS: 
 }, 100); 
 
 // =========================================================
-// [MOD-WORKSPACE] 3B ERİŞİM KÜRESİ GÖRSELLEŞTİRİCİ
+// [MOD-WORKSPACE] 3B ERİŞİM KÜRESİ GÖRSELLEŞTİRECİ VE EK SENARYOLAR
 // =========================================================
-const workspaceBtn = document.getElementById('workspace_btn');
-const wsGeometry = new THREE.SphereGeometry(0.95, 32, 24, 0, Math.PI * 2, 0, Math.PI / 2); 
-const wsMaterial = new THREE.MeshBasicMaterial({ color: 0x3498db, wireframe: true, transparent: true, opacity: 0.15 });
-const workspaceSphere = new THREE.Mesh(wsGeometry, wsMaterial);
-workspaceSphere.position.set(0, 0, 0); workspaceSphere.visible = false; workspaceSphere.rotation.x = Math.PI / 2; 
-scene.add(workspaceSphere);
-
-let isWorkspaceVisible = false;
-workspaceBtn.addEventListener('click', () => {
-isWorkspaceVisible = !isWorkspaceVisible;
-workspaceSphere.visible = isWorkspaceVisible;
-if (isWorkspaceVisible) {
-workspaceBtn.innerText = "🌐 WORKSPACE GİZLE"; workspaceBtn.style.background = "#e67e22"; 
-speakStatus("Workspace boundary visualization activated."); statusText.innerText = "🌐 SYS: WORKSPACE VISIBLE"; statusText.style.color = "#3498db";
-} else {
-workspaceBtn.innerText = "🌐 WORKSPACE GÖSTER"; workspaceBtn.style.background = "#2980b9";
-speakStatus("Workspace boundary visualization deactivated."); statusText.innerText = "🌐 SYS: WORKSPACE HIDDEN"; statusText.style.color = "#bdc3c7";
-}
-});
-
-// =========================================================
-// [MOD-AXES] HER EKLEM İÇİN YEREL EKSENLER
-// =========================================================
-const axesBtn = document.getElementById('axes_btn');
+let workspaceSphere;
 let allAxes = [];
-const baseAxes = new THREE.AxesHelper(0.8); baseAxes.rotation.x = -Math.PI / 2; baseAxes.position.set(0, 0, 0); baseAxes.visible = false;
-scene.add(baseAxes); allAxes.push(baseAxes);
-
-const robotJoints = [j1P, j2P, j3P, j4P, j5P, j6P, gripBase];
-robotJoints.forEach(joint => {
-if (joint) {
-const localAxis = new THREE.AxesHelper(0.3); localAxis.visible = false; 
-joint.add(localAxis); allAxes.push(localAxis);
-}
-}); 
-
+let isWorkspaceVisible = false;
 let isAxesVisible = false;
-axesBtn.addEventListener('click', () => {
-isAxesVisible = !isAxesVisible;
-allAxes.forEach(axis => { axis.visible = isAxesVisible; });
-if (isAxesVisible) {
-axesBtn.innerText = "📌 EKSENLERİ GİZLE"; axesBtn.style.background = "#c0392b"; 
-speakStatus("Local kinematic frames activated. Displaying Denavit-Hartenberg parameters."); statusText.innerText = "📌 SYS: KINEMATIC FRAMES VISIBLE"; statusText.style.color = "#9b59b6";
-} else {
-axesBtn.innerText = "📌 EKSENLERİ GÖSTER (X-Y-Z)"; axesBtn.style.background = "#8e44ad"; 
-speakStatus("Kinematic frames deactivated."); statusText.innerText = "📌 SYS: FRAMES HIDDEN"; statusText.style.color = "#bdc3c7";
+
+function setupWorkspaceAndAxes() {
+    const workspaceBtn = document.getElementById('workspace_btn');
+    const axesBtn = document.getElementById('axes_btn');
+    if (!workspaceBtn || !axesBtn || !scene) return;
+
+    const wsGeometry = new THREE.SphereGeometry(0.95, 32, 24, 0, Math.PI * 2, 0, Math.PI / 2);
+    const wsMaterial = new THREE.MeshBasicMaterial({ color: 0x3498db, wireframe: true, transparent: true, opacity: 0.15 });
+    workspaceSphere = new THREE.Mesh(wsGeometry, wsMaterial);
+    workspaceSphere.position.set(0, 0, 0);
+    workspaceSphere.visible = false;
+    workspaceSphere.rotation.x = Math.PI / 2;
+    scene.add(workspaceSphere);
+
+    workspaceBtn.addEventListener('click', () => {
+        isWorkspaceVisible = !isWorkspaceVisible;
+        workspaceSphere.visible = isWorkspaceVisible;
+        if (isWorkspaceVisible) {
+            workspaceBtn.innerText = "🌐 WORKSPACE GİZLE";
+            workspaceBtn.style.background = "#e67e22";
+            speakStatus("Workspace boundary visualization activated.");
+            statusText.innerText = "🌐 SYS: WORKSPACE VISIBLE";
+            statusText.style.color = "#3498db";
+        } else {
+            workspaceBtn.innerText = "🌐 WORKSPACE GÖSTER";
+            workspaceBtn.style.background = "#2980b9";
+            speakStatus("Workspace boundary visualization deactivated.");
+            statusText.innerText = "🌐 SYS: WORKSPACE HIDDEN";
+            statusText.style.color = "#bdc3c7";
+        }
+    });
+
+    const axesBtnLocal = axesBtn;
+    const baseAxes = new THREE.AxesHelper(0.8);
+    baseAxes.rotation.x = -Math.PI / 2;
+    baseAxes.position.set(0, 0, 0);
+    baseAxes.visible = false;
+    scene.add(baseAxes);
+    allAxes.push(baseAxes);
+
+    const robotJoints = [j1P, j2P, j3P, j4P, j5P, j6P, gripBase];
+    robotJoints.forEach(joint => {
+        if (joint) {
+            const localAxis = new THREE.AxesHelper(0.3);
+            localAxis.visible = false;
+            joint.add(localAxis);
+            allAxes.push(localAxis);
+        }
+    });
+
+    axesBtnLocal.addEventListener('click', () => {
+        isAxesVisible = !isAxesVisible;
+        allAxes.forEach(axis => { axis.visible = isAxesVisible; });
+        if (isAxesVisible) {
+            axesBtnLocal.innerText = "📌 EKSENLERİ GİZLE";
+            axesBtnLocal.style.background = "#c0392b";
+            speakStatus("Local kinematic frames activated. Displaying Denavit-Hartenberg parameters.");
+            statusText.innerText = "📌 SYS: KINEMATIC FRAMES VISIBLE";
+            statusText.style.color = "#9b59b6";
+        } else {
+            axesBtnLocal.innerText = "📌 EKSENLERİ GÖSTER (X-Y-Z)";
+            axesBtnLocal.style.background = "#8e44ad";
+            speakStatus("Kinematic frames deactivated.");
+            statusText.innerText = "📌 SYS: FRAMES HIDDEN";
+            statusText.style.color = "#bdc3c7";
+        }
+    });
 }
-});
+
 
 // =========================================================
 // TERMİNAL (YAZILI) KONTROLÜ
@@ -875,12 +924,25 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
 // GAZEBO TOGGLE & ORTAM DEĞİŞTİRME
 // =========================================================
 
+function openGazeboWindow() {
+    const streamUrl = 'http://localhost:8080/stream?topic=/kamera/kamera_sensor/image_raw&type=mjpeg&quality=80';
+    const popup = window.open('', 'GazeboViewer', 'width=980,height=650,resizable=yes,scrollbars=no');
+    if (!popup) {
+        speakStatus('Popup engellendi. Gazebo paneli açılıyor.');
+        toggleGazeboView();
+        return;
+    }
+
+    popup.document.write(`<!doctype html><html><head><title>Gazebo Cam</title><style>body{margin:0;background:#08101c;color:#fff;font-family:Arial,sans-serif;} .top{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#111;border-bottom:1px solid #222;} .top button{background:#e74c3c;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-weight:bold;} img{width:100%;height:calc(100vh - 58px);object-fit:contain;background:#000;}</style></head><body><div class="top"><span>Gazebo Kamera Akışı</span><button onclick="window.close()">Kapat</button></div><img src="${streamUrl}" alt="Gazebo Kamera"></body></html>`);
+    popup.document.close();
+    popup.focus();
+}
+
 function toggleGazeboView() {
 	const gazeboPanel = document.getElementById('gazebo-panel');
 	const toggleBtn = document.getElementById('toggle_gazebo_btn');
-	const visualColumn = document.querySelector('.visual-column');
 	
-	if(gazeboPanel.style.display === 'none') {
+	if (gazeboPanel.style.display === 'none') {
 		gazeboPanel.style.display = 'flex';
 		toggleBtn.innerText = '👁️ CAM-01 GIZLE';
 		toggleBtn.style.background = '#c0392b';
