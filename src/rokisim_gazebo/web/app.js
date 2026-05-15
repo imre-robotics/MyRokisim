@@ -1,6 +1,6 @@
 
 let isRosConnected = false;
-var ros = new ROSLIB.Ros({ url : 'ws://localhost:9090' });
+var ros = new ROSLIB.Ros({ url : 'ws://10.35.80.141:9090'});
 ros.on('connection', function() { 
 isRosConnected = true;
 document.getElementById('status').innerHTML= 'SYS: ONLINE';
@@ -21,7 +21,7 @@ document.getElementById('status').style.color= '#000';
 });
 
 var jointTopic = new ROSLIB.Topic({ ros : ros, name : '/arm_controller/commands', messageType : 'std_msgs/Float64MultiArray' });
-var angles = { j1:0, j2:0, j3:0, j4:0, j5:0, j6:0, grip:0, cam:0 };
+var angles = { j1: 0, j2: -0.45, j3: 1.20, j4: 0.20, j5: 0.35, j6: 0, grip: 0.03, cam: 0 };
 
 // KAMERA ÇEVRİMDIŞI MODU (Sinyal Kesici)
 const gazeboCam = document.getElementById('gazebo-cam');
@@ -71,53 +71,57 @@ function initDigitalTwin() {
     orbitCtrl = new THREE.OrbitControls(camera3d, renderer.domElement);
     orbitCtrl.enableDamping = true;
     orbitCtrl.dampingFactor = 0.05;
+    orbitCtrl.target.set(0, 0, 0.42);
+    camera3d.position.set(0.35, -0.7, 1.1);
+    camera3d.lookAt(orbitCtrl.target);
+    orbitCtrl.update();
 
     const grid = new THREE.GridHelper(2, 20, 0x444444, 0x222222);
     grid.rotation.x = Math.PI / 2;
     scene.add(grid);
     scene.add(new THREE.AxesHelper(0.5));
 
-    const matGrey = new THREE.MeshPhongMaterial({ color: 0x3a3a3a });
-    const matOrange = new THREE.MeshPhongMaterial({ color: 0xd35400 });
+    const matGrey = new THREE.MeshPhongMaterial({ color: 0x2b2b2b });
+    const matOrange = new THREE.MeshPhongMaterial({ color: 0xde6a17 });
 
     robotBase = new THREE.Group(); scene.add(robotBase);
-    const baseMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05), matGrey);
-    baseMesh.rotation.x = Math.PI / 2; baseMesh.position.z = 0.025; robotBase.add(baseMesh);
+    const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.08), matGrey);
+    baseMesh.position.z = 0.04; robotBase.add(baseMesh);
 
     j1P = new THREE.Group(); j1P.position.set(0, 0, 0.05); robotBase.add(j1P);
-    const l1M = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2), matOrange); l1M.rotation.x = Math.PI / 2; l1M.position.z = 0.1; j1P.add(l1M);
+    const l1M = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.22), matOrange); l1M.position.z = 0.11; j1P.add(l1M);
 
     j2P = new THREE.Group(); j2P.position.set(0, 0, 0.2); j1P.add(j2P);
-    const l2M = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4), matGrey); l2M.rotation.x = Math.PI / 2; l2M.position.z = 0.2; j2P.add(l2M);
+    const l2M = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.42), matGrey); l2M.position.z = 0.21; j2P.add(l2M);
 
     j3P = new THREE.Group(); j3P.position.set(0, 0, 0.4); j2P.add(j3P);
-    const l3M = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3), matOrange); l3M.rotation.x = Math.PI / 2; l3M.position.z = 0.15; j3P.add(l3M);
+    const l3M = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.32), matOrange); l3M.position.z = 0.16; j3P.add(l3M);
 
     j4P = new THREE.Group(); j4P.position.set(0, 0, 0.3); j3P.add(j4P);
-    const l4M = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.1), matGrey); l4M.rotation.x = Math.PI / 2; l4M.position.z = 0.05; j4P.add(l4M);
+    const l4M = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.12), matGrey); l4M.position.z = 0.06; j4P.add(l4M);
 
     j5P = new THREE.Group(); j5P.position.set(0, 0, 0.1); j4P.add(j5P);
-    const l5M = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.1), matOrange); l5M.rotation.x = Math.PI / 2; l5M.position.z = 0.05; j5P.add(l5M);
+    const l5M = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.12), matOrange); l5M.position.z = 0.06; j5P.add(l5M);
 
     j6P = new THREE.Group(); j6P.position.set(0, 0, 0.1); j5P.add(j6P);
-    const l6M = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05), matGrey); l6M.rotation.x = Math.PI / 2; l6M.position.z = 0.025; j6P.add(l6M);
+    const l6M = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), matGrey); l6M.position.z = 0.03; j6P.add(l6M);
 
     gripBase = new THREE.Group(); gripBase.position.set(0, 0, 0.05); j6P.add(gripBase);
 
-    const gripMountBase = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.02, 0.08), new THREE.MeshPhongMaterial({ color: 0x555555 }));
-    gripMountBase.position.z = 0.04; gripBase.add(gripMountBase);
+    const gripMountBase = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.04), new THREE.MeshPhongMaterial({ color: 0x444444 }));
+    gripMountBase.position.z = 0.02; gripBase.add(gripMountBase);
 
-    gripperLeftFinger = new THREE.Group(); gripperLeftFinger.position.set(0, 0, 0.04); gripBase.add(gripperLeftFinger);
-    const leftFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.06), matOrange);
-    leftFingerMesh.position.set(-0.025, 0, 0.03); gripperLeftFinger.add(leftFingerMesh);
+    gripperLeftFinger = new THREE.Group(); gripperLeftFinger.position.set(0, 0, 0.02); gripBase.add(gripperLeftFinger);
+    const leftFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.03, 0.09), matOrange);
+    leftFingerMesh.position.set(-0.075, 0, 0.045); gripperLeftFinger.add(leftFingerMesh);
 
-    gripperRightFinger = new THREE.Group(); gripperRightFinger.position.set(0, 0, 0.04); gripBase.add(gripperRightFinger);
-    const rightFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.06), matOrange);
-    rightFingerMesh.position.set(0.025, 0, 0.03); gripperRightFinger.add(rightFingerMesh);
+    gripperRightFinger = new THREE.Group(); gripperRightFinger.position.set(0, 0, 0.02); gripBase.add(gripperRightFinger);
+    const rightFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.03, 0.09), matOrange);
+    rightFingerMesh.position.set(0.075, 0, 0.045); gripperRightFinger.add(rightFingerMesh);
 
     gripM = {
         updateGripperPosition: function(gripValue) {
-            let fingerOffset = 0.04 * (1 - gripValue / 0.125);
+            let fingerOffset = 0.075 * (1 - gripValue / 0.125);
             gripperLeftFinger.position.x = -fingerOffset;
             gripperRightFinger.position.x = fingerOffset;
         }
@@ -138,6 +142,7 @@ function initDigitalTwin() {
 
 window.addEventListener('load', () => {
     initDigitalTwin();
+    syncControlValues();
 });
 
 let currentEuler = new THREE.Euler();
@@ -489,6 +494,27 @@ bindSlider('j1_s', 'v1', 'j1', 180/Math.PI, '°'); bindSlider('j2_s', 'v2', 'j2'
 bindSlider('j3_s', 'v3', 'j3', 180/Math.PI, '°'); bindSlider('j4_s', 'v4', 'j4', 180/Math.PI, '°');
 bindSlider('j5_s', 'v5', 'j5', 180/Math.PI, '°'); bindSlider('j6_s', 'v6', 'j6', 180/Math.PI, '°');
 bindSlider('grip_s', 'grip_v', 'grip', 1000, ' mm'); bindSlider('cam_slider', 'cam_val', 'cam', 180/Math.PI, '°');
+
+function syncControlValues() {
+    const controls = [
+        { id: 'j1_s', label: 'v1', key: 'j1', mul: 180/Math.PI, suffix: '°' },
+        { id: 'j2_s', label: 'v2', key: 'j2', mul: 180/Math.PI, suffix: '°' },
+        { id: 'j3_s', label: 'v3', key: 'j3', mul: 180/Math.PI, suffix: '°' },
+        { id: 'j4_s', label: 'v4', key: 'j4', mul: 180/Math.PI, suffix: '°' },
+        { id: 'j5_s', label: 'v5', key: 'j5', mul: 180/Math.PI, suffix: '°' },
+        { id: 'j6_s', label: 'v6', key: 'j6', mul: 180/Math.PI, suffix: '°' }
+    ];
+    controls.forEach(({ id, label, key, mul, suffix }) => {
+        const slider = document.getElementById(id);
+        const valueEl = document.getElementById(label);
+        if (slider) slider.value = angles[key];
+        if (valueEl) valueEl.innerText = (angles[key] * mul).toFixed(2) + suffix;
+    });
+    const gripSlider = document.getElementById('grip_s');
+    const gripValue = document.getElementById('grip_v');
+    if (gripSlider) gripSlider.value = angles.grip;
+    if (gripValue) gripValue.innerText = (angles.grip * 1000).toFixed(2) + ' mm';
+}
 
 // ROS'A VERİ GÖNDERME
 setInterval(function() {

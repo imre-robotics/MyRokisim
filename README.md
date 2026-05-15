@@ -13,6 +13,7 @@ ROS 2 ve Gazebo altyapısıyla tam senkronize çalışan bu sistem; laboratuvar 
 ## ✨ Temel Özellikler
 
 * **🤖 3D Digital Twin (Senkronize İkiz):** `Three.js` ile güçlendirilmiş, robotun fiziksel durumunu milisaniyeler içinde ekrana yansıtan yerel 3D motoru.
+* **🤖 FAIRINO 6 Eksenli Endüstriyel Robot:** Gazebo ve dijital ikiz tarafında gerçekçi bir 6-DOF sürdürülebilir robot kol modeli ile çalışır.
 * **👁️ AI Computer Vision (Yapay Zeka Görüşü):** `Google MediaPipe` altyapısı ve Native WebRTC ile el iskeletini (21 eklem) gerçek zamanlı tarayıp, parmak hareketlerini doğrudan robot motorlarına eşleyen (Mapping) otonom sürüş modu.
 * **🎯 Inverse Kinematics (Ters Kinematik):** Hedef X, Y, Z koordinatlarına gitmek için Gradient Descent algoritması kullanan, eklem katlanmalarını (Singularity) engelleyen yerleşik sayısal çözücü.
 * **🎮 Analog Teleoperasyon:** Yumuşak geçişli (Low-Pass Filter) sanal joystick ile X-Y düzleminde güvenli manuel sürüş.

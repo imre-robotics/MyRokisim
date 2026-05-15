@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RoKiSim 6.1 - Industrial Control Pendant</title>
 <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -18,7 +19,7 @@
 <div class="header">
 <div>
 <span style="font-size: 20px; color: #e67e22;">RoKiSim 6.1</span>
-<span style="font-size: 14px; color: #aaa; margin-left: 10px;">| DESKTOP EDITION</span>
+<span style="font-size: 14px; color: #aaa; margin-left: 10px;">| TABLET READY</span>
 </div>
 <span id="status" class="status-badge">SYS: OFFLINE</span>
 </div>
@@ -164,10 +165,10 @@ ORTAM:
 <div class="panel panel-jog">
 <h3 style="color: #3498db;">[JOG] Joint Diagnostics</h3>
 <div class="data-row"><span class="data-label">J1_BASE :</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j1_s"> <span id="v1" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J2_SHLDR:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j2_s"> <span id="v2" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J3_ELBOW:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j3_s"> <span id="v3" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J4_WRST1:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j4_s"> <span id="v4" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J5_WRST2:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j5_s"> <span id="v5" style="color:#fff">0.00°</span></div>
+<div class="data-row"><span class="data-label">J2_SHLDR:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="-0.45" id="j2_s"> <span id="v2" style="color:#fff">-25.79°</span></div>
+<div class="data-row"><span class="data-label">J3_ELBOW:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="1.20" id="j3_s"> <span id="v3" style="color:#fff">68.75°</span></div>
+<div class="data-row"><span class="data-label">J4_WRST1:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0.20" id="j4_s"> <span id="v4" style="color:#fff">11.46°</span></div>
+<div class="data-row"><span class="data-label">J5_WRST2:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0.35" id="j5_s"> <span id="v5" style="color:#fff">20.06°</span></div>
 <div class="data-row"><span class="data-label">J6_FLNGE:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j6_s"> <span id="v6" style="color:#fff">0.00°</span></div>
 </div>
 
@@ -175,8 +176,8 @@ ORTAM:
 <h3 style="color: #e67e22;">[ACT] End Effector</h3>
 <div class="data-row">
 <span class="data-label">JAW_GAP :</span>
-<input type="range" min="0.0" max="0.125" step="0.001" value="0.0" id="grip_s">
-<span id="grip_v" style="color: #e67e22;">0.00 mm</span>
+<input type="range" min="0.0" max="0.125" step="0.001" value="0.03" id="grip_s">
+<span id="grip_v" style="color: #e67e22;">30.00 mm</span>
 </div>
 </div>
 
