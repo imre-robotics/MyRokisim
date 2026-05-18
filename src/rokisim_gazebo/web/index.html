@@ -7,6 +7,11 @@
 <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<!-- Load ARButton as an ES module and expose it as a global for legacy scripts -->
+<script type="module">
+import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/webxr/ARButton.js';
+window.ARButton = ARButton;
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -54,6 +59,10 @@ ORTAM:
 </select>
 </label>
 </div>
+<div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
+<button id="start_ar_btn" style="background: #27ae60; color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 12px;">🌐 AR'Yİ BAŞLAT</button>
+</div>
+<div id="ar_button_holder" style="margin-top: 0px; display: flex; gap: 10px; align-items: center;"></div>
 <div id="canvas3d-container"></div>
 </div>
 </div>
