@@ -143,28 +143,29 @@ function initDigitalTwin() {
 
     // --- initDigitalTwin fonksiyonu içindeki diğer kodlarının bittiği yer ---
 
-    // 🛠️ KRİTİK DÜZELTME 2: AR Başlarken ve Biterken Kamera Donanım Yönetimi
-    // 🛠️ GÜNCELLENMİŞ KISIM: AR Başlarken ve Biterken Donanım ve Bellek Yönetimi
-    // 🛠️ SADECE BU BLOKTAKİ KODU GÜNCELLE:
-    // 🛠️ FINAL REVIZYON: Yan Dönme Engelleyici Donanım Yönetimi
+    // =========================================================================
+    // 🛠️ FAZ 2 RECOGNITION: AR BAŞLARKEN VE BİTERKEN SES / DONANIM / KATMAN YÖNETİMİ
+    // =========================================================================
     renderer.xr.addEventListener('sessionstart', () => {
-        if (typeof logToConsole === 'function') logToConsole('INFO', 'WebXR AR Modu Aktif.');
+        if (typeof logToConsole === 'function') logToConsole('INFO', 'WebXR AR Modu Aktif. Ses katmanı devrede.');
         if (scene) scene.background = null; 
 
-        // 🚨 NOKTA ATIŞI DÜZELTME: 
-        // Masaüstünde Z-Up (Mühendislik) kullanırken WebXR Y-Up (Web) bekler.
-        // Robotu AR dünyasında tam ayağa kaldırmak için X ekseninde 90 derece (PI / 2 radyan) çeviriyoruz.
-        // Not: Eğer robot ters tarafa dikilirse eksiyi kaldırıp Math.PI / 2 yapabilirsin.
+        // 🚨 YAN DÖNME ENGELLEYİCİ
         if (robotBase) {
             robotBase.rotation.x = -Math.PI / 2; 
         }
         
-        // Arayüzü gizle
+        // Masaüstü arayüzünü gizle
         const mainCont = document.querySelector('.main-container');
         const headerCont = document.querySelector('.header');
         if (mainCont) mainCont.style.display = 'none';
         if (headerCont) headerCont.style.display = 'none';
         
+        // 🎤 AR Ses Katmanını GÖRÜNÜR yap
+        const arOverlay = document.getElementById('ar-overlay-container');
+        if (arOverlay) arOverlay.style.display = 'block';
+
+        // Kamera çakışmasını önlemek için MediaPipe'ı uyut
         if (typeof camera !== 'undefined' && camera && typeof camera.stop === 'function') {
             camera.stop().catch(err => console.log("MediaPipe durdurma hatası:", err));
         }
@@ -173,8 +174,7 @@ function initDigitalTwin() {
     renderer.xr.addEventListener('sessionend', () => {
         if (reticle) reticle.visible = false;
         
-        // 🚨 KİNEMATİK SIFIRLAMA:
-        // AR modundan çıkınca robotu tekrar masaüstündeki orijinal ROS (Z-Up) koordinatlarına döndür.
+        // Orijinal ROS (Z-Up) koordinatlarına geri dön
         if (robotBase) {
             robotBase.rotation.x = 0; 
         }
@@ -183,17 +183,22 @@ function initDigitalTwin() {
             scene.background = new THREE.Color(environments[currentEnvironment].color);
         }
         
+        // Masaüstü arayüzünü geri getir
         const mainCont = document.querySelector('.main-container');
         const headerCont = document.querySelector('.header');
         if (mainCont) mainCont.style.display = 'flex';
         if (headerCont) headerCont.style.display = 'flex';
         
+        // 🎤 AR Ses Katmanını GİZLE
+        const arOverlay = document.getElementById('ar-overlay-container');
+        if (arOverlay) arOverlay.style.display = 'none';
+
+        // MediaPipe'ı geri uyandır
         if (typeof camera !== 'undefined' && camera && typeof camera.start === 'function' && !aiToggle.disabled) {
             camera.start().catch(err => console.log("MediaPipe başlatma hatası:", err));
         }
     });
     
-
     initARButton();
 
     ghostLine = new THREE.Line(ghostGeometry, ghostMaterial);
@@ -202,7 +207,7 @@ function initDigitalTwin() {
 
     setupWorkspaceAndAxes();
     
-    // YENİ EKLENEN KISIM: XR (AR) DÖNGÜSÜNÜ BAŞLAT
+    // XR (AR) DÖNGÜSÜ
     renderer.setAnimationLoop( function ( timestamp, frame ) {
         animate3D( timestamp, frame );
     } );
@@ -214,15 +219,14 @@ function initARButton() {
     holder.innerHTML = '';
 
     const ARButtonClass = window.ARButton || (window.THREE && window.THREE.ARButton);
-    
-    // Kamerayı açabilmesi için renderer'da WebXR'ı aktifleştiriyoruz
     renderer.xr.enabled = true; 
 
     if (ARButtonClass && typeof ARButtonClass.createButton === 'function') {
+        // 🚨 KRİTİK GÜNCELLEME: WebXR seansına HTML katmanımızı overlay olarak kaydettik!
         const button = ARButtonClass.createButton(renderer, {
             requiredFeatures: ['hit-test'],
             optionalFeatures: ['dom-overlay'],
-            domOverlay: { root: document.body }
+            domOverlay: { root: document.getElementById('ar-overlay-container') }
         });
         button.style.fontFamily = "Consolas, monospace";
         button.style.background = "#27ae60";
@@ -233,6 +237,30 @@ function initARButton() {
         button.style.cursor = "pointer";
         button.style.fontSize = "12px";
         holder.appendChild(button);
+
+        // 🎤 AR MİKROFONU TETİKLEME MOTORU
+        const arMicBtn = document.getElementById('ar_mic_btn');
+        if (arMicBtn) {
+            arMicBtn.onclick = function(e) {
+                e.stopPropagation(); // AR ekranında rastgele tıklamaları engelle
+                
+                arMicBtn.style.background = "rgba(192, 57, 43, 0.9)"; // Dinlerken agresif kırmızı
+                arMicBtn.innerText = "🔴";
+
+                // Senin projedeki orijinal mikrofon butonunu arkadan tetikliyoruz
+                const originalMicBtn = document.getElementById('mic_btn');
+                if (originalMicBtn) {
+                    originalMicBtn.click();
+                }
+
+                // 4 saniye sonra mikrofonu tekrar mor haline geri döndür
+                setTimeout(() => {
+                    arMicBtn.style.background = "rgba(147, 51, 234, 0.7)";
+                    arMicBtn.innerText = "🎤";
+                }, 4000);
+            };
+        }
+
     } else {
         const error = document.createElement('div');
         error.innerText = 'WebXR AR desteği yüklenemedi. Tarayıcınız veya bağlantınız desteklemiyor olabilir.';
