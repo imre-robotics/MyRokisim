@@ -12,6 +12,7 @@
 import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/webxr/ARButton.js';
 window.ARButton = ARButton;
 </script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -124,7 +125,7 @@ ORTAM:
 <div class="data-row"><span class="data-label">TRG_X:</span><input type="number" id="tX" step="0.05" value="0.3"></div>
 <div class="data-row"><span class="data-label">TRG_Y:</span><input type="number" id="tY" step="0.05" value="0.2"></div>
 <div class="data-row"><span class="data-label">TRG_Z:</span><input type="number" id="tZ" step="0.05" value="0.4"></div>
-<button class="btn" onclick="solveIK()">EXECUTE JOG</button>
+<button class="btn" onclick="jogToTarget()">EXECUTE JOG</button>
 <div id="ik_status">SYS: IDLE</div>
 </div>
 
@@ -161,6 +162,12 @@ ORTAM:
 <button id="workspace_btn" style="background: #2980b9; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
 🌐 WORKSPACE GÖSTER
 </button>
+</div>
+
+<div style="margin-top: 10px;">
+    <button id="home_btn" style="background: #2c3e50; color: #f1c40f; border: 1px solid #f1c40f; padding: 10px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
+        🏠 ROBOTU HOME KONUMUNA ÇEK (SAFE RESET)
+    </button>
 </div>
 
 <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">

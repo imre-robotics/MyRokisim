@@ -84,64 +84,130 @@ function initDigitalTwin() {
     scene.add(grid);
     scene.add(new THREE.AxesHelper(0.5));
 
-    const matGrey = new THREE.MeshPhongMaterial({ color: 0x2b2b2b });
-    const matOrange = new THREE.MeshPhongMaterial({ color: 0xde6a17 });
+    // =========================================================================
+    // 🏭 FANUC LR Mate 200iD - ENDÜSTRİYEL STL MODELLERİ VE KİNEMATİK
+    // =========================================================================
+    
+    // Fanuc Renk Paleti
+    const fanucYellow = new THREE.MeshStandardMaterial({ color: 0xFFC000, roughness: 0.3, metalness: 0.1 });
+    const fanucDark = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.6, metalness: 0.3 });
+    const stlLoader = new THREE.STLLoader();
 
-    robotBase = new THREE.Group(); scene.add(robotBase);
-    const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.08), matGrey);
-    baseMesh.position.z = 0.04; robotBase.add(baseMesh);
+    robotBase = new THREE.Group(); 
+    scene.add(robotBase);
 
-    j1P = new THREE.Group(); j1P.position.set(0, 0, 0.05); robotBase.add(j1P);
-    const l1M = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.22), matOrange); l1M.position.z = 0.11; j1P.add(l1M);
+    // Mafsal 1 (Taban Dönüşü)
+    j1P = new THREE.Group(); 
+    j1P.position.set(0, 0, 0.330); // Z ekseninde taban yüksekliği
+    robotBase.add(j1P);
 
-    j2P = new THREE.Group(); j2P.position.set(0, 0, 0.2); j1P.add(j2P);
-    const l2M = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.42), matGrey); l2M.position.z = 0.21; j2P.add(l2M);
+    // Mafsal 2 (Ana Kol İleri-Geri)
+    j2P = new THREE.Group(); 
+    j2P.position.set(0.050, 0, 0); // J1'den J2'ye olan X ofseti
+    j1P.add(j2P);
 
-    j3P = new THREE.Group(); j3P.position.set(0, 0, 0.4); j2P.add(j3P);
-    const l3M = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 0.32), matOrange); l3M.position.z = 0.16; j3P.add(l3M);
+    // Mafsal 3 (Ön Kol Yukarı-Aşağı)
+    j3P = new THREE.Group(); 
+    j3P.position.set(0, 0, 0.330); // L2 kol uzunluğu
+    j2P.add(j3P);
 
-    j4P = new THREE.Group(); j4P.position.set(0, 0, 0.3); j3P.add(j4P);
-    const l4M = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.12), matGrey); l4M.position.z = 0.06; j4P.add(l4M);
+    // Mafsal 4 (Bilek Dönüşü)
+    j4P = new THREE.Group(); 
+    j4P.position.set(0, 0, 0.035); // J3'ten bileğe olan ufak Z ofseti
+    j3P.add(j4P);
 
-    j5P = new THREE.Group(); j5P.position.set(0, 0, 0.1); j4P.add(j5P);
-    const l5M = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.12), matOrange); l5M.position.z = 0.06; j5P.add(l5M);
+    // Mafsal 5 (Bilek Bükülmesi)
+    j5P = new THREE.Group(); 
+    j5P.position.set(0.335, 0, 0); // L3 kol uzunluğu
+    j4P.add(j5P);
 
-    j6P = new THREE.Group(); j6P.position.set(0, 0, 0.1); j5P.add(j6P);
-    const l6M = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), matGrey); l6M.position.z = 0.03; j6P.add(l6M);
+    // Mafsal 6 (Flanş / Uç İşlevci Dönüşü)
+    j6P = new THREE.Group(); 
+    j6P.position.set(0.080, 0, 0); // Bilekten flanşa olan uzunluk
+    j5P.add(j6P);
 
-    gripBase = new THREE.Group(); gripBase.position.set(0, 0, 0.05); j6P.add(gripBase);
+    // =========================================================================
+    // ⬇️ STL MODELLERİNİ ASENKRON OLARAK EKLEMLERE YÜKLE (HATA YAKALAMALI)
+    // =========================================================================
+    
+    function loadFanucPart(file, parentGroup, material) {
+        stlLoader.load('models/' + file, 
+            function(geo) { 
+                console.log("BAŞARILI: " + file + " yüklendi.");
+                geo.computeVertexNormals(); // Işık ve gölgelerin doğru hesaplanması için
+                
+                let mesh = new THREE.Mesh(geo, material);
+                
+                // 🚨 EĞER ROBOT EKRANI KAPLIYORSA VEYA GÖRÜNMÜYORSA ŞU SATIRIN BAŞINDAKİ // İŞARETLERİNİ SİL:
+                // mesh.scale.set(0.001, 0.001, 0.001); 
 
-    const gripMountBase = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.04), new THREE.MeshPhongMaterial({ color: 0x444444 }));
-    gripMountBase.position.z = 0.02; gripBase.add(gripMountBase);
+                // ROS X ekseni ile Three.js hizalaması (Bazen parçalar yan yatmış gelebilir)
+                // Eğer robot parçalanmış görünürse bu satırı aktif edeceğiz.
+                // mesh.rotation.x = -Math.PI / 2;
 
-    gripperLeftFinger = new THREE.Group(); gripperLeftFinger.position.set(0, 0, 0.02); gripBase.add(gripperLeftFinger);
-    const leftFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.03, 0.09), matOrange);
-    leftFingerMesh.position.set(-0.075, 0, 0.045); gripperLeftFinger.add(leftFingerMesh);
+                parentGroup.add(mesh); 
+            },
+            undefined, // Yükleme yüzdesi (boş geçiyoruz)
+            function(err) { 
+                console.error("HATA! " + file + " bulunamadı! İsim veya Klasör hatalı:", err);
+                // Ekranda hatayı anında görmek için sağ üstteki yazıyı KIRMIZI yap:
+                document.getElementById('status').innerText = "ERR: STL BULUNAMADI!";
+                document.getElementById('status').style.backgroundColor = "#e74c3c";
+            }
+        );
+    }
 
-    gripperRightFinger = new THREE.Group(); gripperRightFinger.position.set(0, 0, 0.02); gripBase.add(gripperRightFinger);
-    const rightFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.03, 0.09), matOrange);
-    rightFingerMesh.position.set(0.075, 0, 0.045); gripperRightFinger.add(rightFingerMesh);
+    // Parçaları sırayla akıllı motora gönder
+    loadFanucPart('base_link.stl', robotBase, fanucDark);
+    loadFanucPart('link_1.stl', j1P, fanucYellow);
+    loadFanucPart('link_2.stl', j2P, fanucYellow);
+    loadFanucPart('link_3.stl', j3P, fanucYellow);
+    loadFanucPart('link_4.stl', j4P, fanucYellow);
+    loadFanucPart('link_5.stl', j5P, fanucYellow);
+    loadFanucPart('link_6.stl', j6P, fanucDark);
+
+    // --- GRIPPER (TUTUCU) SİSTEMİNİ KORUMA ---
+    // Eski kodlarındaki parmak tutma işlevlerinin bozulmaması için j6P'nin ucuna siyah şık bir tutucu ekliyoruz.
+    gripBase = new THREE.Group(); 
+    gripBase.position.set(0, 0, 0); // j6P'nin tam merkezine oturtuldu
+    j6P.add(gripBase);
+
+    const gripMountBase = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.03), fanucDark);
+    gripMountBase.position.set(0.02, 0, 0); 
+    gripBase.add(gripMountBase);
+
+    gripperLeftFinger = new THREE.Group(); 
+    gripperLeftFinger.position.set(0, 0, 0); 
+    gripBase.add(gripperLeftFinger);
+    const leftFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.08), fanucDark);
+    leftFingerMesh.position.set(0.04, -0.05, 0.03); 
+    gripperLeftFinger.add(leftFingerMesh);
+
+    gripperRightFinger = new THREE.Group(); 
+    gripperRightFinger.position.set(0, 0, 0); 
+    gripBase.add(gripperRightFinger);
+    const rightFingerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.025, 0.08), fanucDark);
+    rightFingerMesh.position.set(0.04, 0.05, 0.03); 
+    gripperRightFinger.add(rightFingerMesh);
 
     gripM = {
         updateGripperPosition: function(gripValue) {
-            let fingerOffset = 0.075 * (1 - gripValue / 0.125);
-            gripperLeftFinger.position.x = -fingerOffset;
-            gripperRightFinger.position.x = fingerOffset;
+            let fingerOffset = 0.05 * (1 - gripValue / 0.125);
+            gripperLeftFinger.position.y = -fingerOffset;
+            gripperRightFinger.position.y = fingerOffset;
         }
     };
 
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(5, 5, 10);
     scene.add(light);
-    scene.add(new THREE.AmbientLight(0x404040));
+    scene.add(new THREE.AmbientLight(0x606060)); // Rengi daha net görmek için ışığı biraz arttırdık
 
     const reticleGeometry = new THREE.RingGeometry(0.08, 0.12, 32).rotateX(-Math.PI / 2);
     reticle = new THREE.Mesh(reticleGeometry, new THREE.MeshBasicMaterial({ color: 0x00ff99, opacity: 0.7, transparent: true }));
     reticle.visible = false;
     reticle.matrixAutoUpdate = false;
     scene.add(reticle);
-
-    // --- initDigitalTwin fonksiyonu içindeki diğer kodlarının bittiği yer ---
 
     // =========================================================================
     // 🛠️ FAZ 2 RECOGNITION: AR BAŞLARKEN VE BİTERKEN SES / DONANIM / KATMAN YÖNETİMİ
@@ -676,7 +742,7 @@ function syncControlValues() {
     controls.forEach(({ id, label, key, mul, suffix }) => {
         const slider = document.getElementById(id);
         const valueEl = document.getElementById(label);
-        if (slider) slider.value = angles[key];
+        if (slider) slider.value = angles[key]; // Slider pozisyonunu güncelle
         if (valueEl) valueEl.innerText = (angles[key] * mul).toFixed(2) + suffix;
     });
     const gripSlider = document.getElementById('grip_s');
@@ -959,11 +1025,11 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
 
 
 
-// =========================================================
+                // =========================================================
         // [MOD-SYS] ZAMAN DAMGALI LOG MOTORU VE SCRIPT PARSER
         // =========================================================
-        
-        // 1. Konsol Sürükleme ve Buton Bağlantısı
+
+        // 1. Konsol ve Buton Yönetimi
         const consoleModal = { el: document.getElementById('console_modal'), header: document.getElementById('console_header'), btn: document.getElementById('console_btn') };
         attachDrag(consoleModal);
         consoleModal.btn.onclick = () => consoleModal.el.style.display = 'flex';
@@ -980,18 +1046,31 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
             
             const logLine = `<div style="color:${color}; margin-bottom: 4px;">[${time}] [${type}] ${msg}</div>`;
             logBox.innerHTML += logLine;
-            logBox.scrollTop = logBox.scrollHeight; // Otomatik en alta kaydır
+            logBox.scrollTop = logBox.scrollHeight;
         }
 
-        // Sistemi açılış logları ile canlandır
-        setTimeout(() => logToConsole('INFO', 'RoKiSim 6.1 Kernel Başlatıldı.'), 500);
-        setTimeout(() => logToConsole('INFO', 'Kinematik Çözücü Aktif.'), 800);
-        setTimeout(() => logToConsole('WARN', 'ROS 2 Haberleşmesi Bekleniyor...'), 1200);
-
-        // 3. Asenkron Bekleme Fonksiyonu (Scriptteki WAIT komutu için)
+        // 3. Yardımcı Fonksiyonlar (Wait ve Slew Rate Kontrol)
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
-        // 4. Endüstriyel Macro Script Çözücü (Parser)
+        // 🛠️ YUMUŞATILMIŞ HAREKET MOTORU (Tüm sistem bunu kullanacak)
+        async function smoothMoveTo(targetX, targetY, targetZ) {
+            let startX = parseFloat(document.getElementById('tX').value);
+            let startY = parseFloat(document.getElementById('tY').value);
+            let startZ = parseFloat(document.getElementById('tZ').value);
+            
+            let steps = 50; 
+            for(let i = 1; i <= steps; i++) {
+                let t = i / steps;
+                document.getElementById('tX').value = (startX + (targetX - startX) * t).toFixed(3);
+                document.getElementById('tY').value = (startY + (targetY - startY) * t).toFixed(3);
+                document.getElementById('tZ').value = (startZ + (targetZ - startZ) * t).toFixed(3);
+                
+                solveIK(); 
+                await delay(20); 
+            }
+        }
+
+        // 4. Endüstriyel Macro Script Çözücü
         async function runMacroScript() {
             const scriptText = document.getElementById('script_input').value;
             const lines = scriptText.split('\n');
@@ -999,57 +1078,63 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
             logToConsole('INFO', '--- GÖREV DİZİSİ BAŞLATILDI ---');
             
             for (let i = 0; i < lines.length; i++) {
-                // Yorum satırlarını ve boşlukları temizle
                 let rawLine = lines[i].split('//')[0].trim();
                 if (rawLine === '') continue;
 
-                let cmd = rawLine.toUpperCase().split(/\s+/); // Boşluklara göre böl
+                let cmd = rawLine.toUpperCase().split(/\s+/);
                 logToConsole('CMD', `SATIR ${i+1}: ${rawLine}`);
 
                 try {
-                    // KOMUT: GOTO X Y Z (Ters Kinematik kullanarak hedefe git)
+                    // YUMUŞATILMIŞ GOTO HAREKETİ
                     if (cmd[0] === 'GOTO' && cmd.length === 4) {
-                        document.getElementById('tX').value = parseFloat(cmd[1]);
-                        document.getElementById('tY').value = parseFloat(cmd[2]);
-                        document.getElementById('tZ').value = parseFloat(cmd[3]);
-                        solveIK(); // Zaten kodunda olan IK fonksiyonunu tetikler
-                        await delay(2000); // Robotun hedefe gitmesi için fiziksel pay bırak
+                        await smoothMoveTo(parseFloat(cmd[1]), parseFloat(cmd[2]), parseFloat(cmd[3]));
                     }
-                    // KOMUT: WAIT Milisaniye (Sistemi beklet)
+                    // BEKLEME KOMUTU
                     else if (cmd[0] === 'WAIT' && cmd.length === 2) {
                         await delay(parseInt(cmd[1]));
                     }
-                    // KOMUT: GRIP Değer (Kıskacı aç/kapat)
+                    // KISKAÇ KOMUTU
                     else if (cmd[0] === 'GRIP' && cmd.length === 2) {
                         let gripVal = parseFloat(cmd[1]);
                         angles.grip = Math.max(0.0, Math.min(0.125, gripVal));
                         document.getElementById('grip_s').value = angles.grip;
                         document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
-                        await delay(500); // Kıskacın kapanma süresi
+                        await delay(500);
                     }
-                    // KOMUT: HOME (Robotu sıfır noktasına çek)
+                    // HOME POZİSYONUNA YUMUŞAK DÖNÜŞ
                     else if (cmd[0] === 'HOME') {
+                        logToConsole('INFO', 'HOME pozisyonuna dönülüyor...');
+                        await smoothMoveTo(0.3, 0.0, 0.4); 
                         ['j1','j2','j3','j4','j5','j6'].forEach(k => angles[k] = 0);
-                        ['j1','j2','j3'].forEach((k, idx) => { 
-                            document.getElementById(k+'_s').value = 0; 
-                            document.getElementById('v'+(idx+1)).innerText = '0.00°'; 
-                        });
-                        angles.grip = 0;
-                        document.getElementById('grip_s').value = 0;
-                        document.getElementById('grip_v').innerText = '0.00 mm';
-                        await delay(2000);
+                        syncControlValues();
+                        angles.grip = 0.03;
+                        document.getElementById('grip_s').value = angles.grip;
+                        document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
                     }
                     else {
-                        logToConsole('ERR', `Tanımsız Komut veya Eksik Parametre: ${cmd[0]}`);
+                        logToConsole('ERR', `Tanımsız Komut: ${cmd[0]}`);
                     }
                 } catch (e) {
-                    logToConsole('ERR', `Satır ${i+1} İşlenirken Hata: ${e.message}`);
+                    logToConsole('ERR', `Satır ${i+1} Hata: ${e.message}`);
                 }
             }
-            
             logToConsole('INFO', '--- GÖREV DİZİSİ TAMAMLANDI ---');
         }
-        // =========================================================
+
+        async function jogToTarget() {
+            let tX = parseFloat(document.getElementById('tX').value);
+            let tY = parseFloat(document.getElementById('tY').value);
+            let tZ = parseFloat(document.getElementById('tZ').value);
+            
+            // 1. Yumuşak geçişi başlat
+            await smoothMoveTo(tX, tY, tZ);
+            
+            // 2. Hareket bitince arayüzü ve slider'ları son konuma eşitle
+            syncControlValues();
+            
+            document.getElementById('ik_status').innerText = "SYS: TARGET REACHED";
+            document.getElementById('ik_status').style.color = "#2ecc71";
+        }
 
 
 
@@ -1060,18 +1145,23 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
         const maxLogLines = 5000; // Hafızayı şişirmemek için son 5000 satırı tutar
 
         // Veri toplama döngüsü (Fizik motoruyla aynı hızda, her 100ms'de bir)
+        // Veri toplama döngüsü (Her 100ms'de bir çalışır)
         setInterval(() => {
-            if (!isRosConnected && angles.j1 === 0 && angles.j2 === 0) return; // Sistem tamamen rölantideyken boş veri kaydetme
+            if (renderer && renderer.xr && renderer.xr.isPresenting) return; 
+            if (!isRosConnected && angles.j1 === 0 && angles.j2 === 0) return; 
             
-            let timeStamp = new Date().toISOString().split('T')[1].slice(0, -1); // Saat:Dakika:Saniye.Milisaniye
+            let timeStamp = new Date().toISOString().split('T')[1].slice(0, -1); 
             let currentP = getEndEffectorPos(angles);
             
-            // Log satırını oluştur
+            // 🛠️ DÜZELTME: Artık J1'den J6'ya kadar TÜM motor açıları telemetri kaydında!
             let logLine = {
                 time: timeStamp,
                 j1: (angles.j1 * 180/Math.PI).toFixed(2),
                 j2: (angles.j2 * 180/Math.PI).toFixed(2),
                 j3: (angles.j3 * 180/Math.PI).toFixed(2),
+                j4: (angles.j4 * 180/Math.PI).toFixed(2),
+                j5: (angles.j5 * 180/Math.PI).toFixed(2),
+                j6: (angles.j6 * 180/Math.PI).toFixed(2),
                 tcp_x: currentP.x.toFixed(4),
                 tcp_y: currentP.y.toFixed(4),
                 tcp_z: currentP.z.toFixed(4),
@@ -1080,11 +1170,47 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
             };
 
             telemetryLogData.push(logLine);
-            if (telemetryLogData.length > maxLogLines) telemetryLogData.shift(); // En eski veriyi sil
+            if (telemetryLogData.length > maxLogLines) telemetryLogData.shift(); 
             
             document.getElementById('log_count').innerText = `${telemetryLogData.length} KAYIT`;
         }, 100);
 
+
+
+
+
+        document.getElementById('home_btn').addEventListener('click', async () => {
+            if (typeof isPlaying !== 'undefined' && isPlaying) document.getElementById('play_btn').click();
+            
+            logToConsole('INFO', 'SİSTEM: HOME POZİSYONUNA DÖNÜŞ BAŞLATILDI.');
+            speakStatus("Returning to home position.");
+
+            // 1. Önce robotu fiziksel koordinat (X=0.3, Y=0.0, Z=0.4) noktasına süzerek götür
+            await smoothMoveTo(0.3, 0.0, 0.4); 
+            
+            // 2. Şimdi tüm eklemleri (Joints) yazılımsal olarak 0'a çek
+            // (J2'yi -0.45, J3'ü 1.20 gibi başlangıçta kullandığın varsayılan değerlere set edebilirsin)
+            angles.j1 = 0;
+            angles.j2 = -0.45; // senin varsayılan J2 açın
+            angles.j3 = 1.20;  // senin varsayılan J3 açın
+            angles.j4 = 0;
+            angles.j5 = 0;
+            angles.j6 = 0;
+            angles.grip = 0.03;
+
+            // 3. Hesaplamayı tazele
+            solveIK();
+            
+            // 4. Arayüzü güncelle
+            syncControlValues();
+            
+            logToConsole('INFO', 'Robot güvenli HOME pozisyonuna ulaştı.');
+            speakStatus("Robot at home.");
+        });
+
+
+
+        // CSV İndirme Fonksiyonu
         // CSV İndirme Fonksiyonu
         document.getElementById('export_csv_btn').addEventListener('click', () => {
             if (telemetryLogData.length === 0) {
@@ -1092,27 +1218,29 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
                 return;
             }
 
-            // CSV Başlıkları
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "TIMESTAMP,J1_DEG,J2_DEG,J3_DEG,TCP_X,TCP_Y,TCP_Z,VELOCITY_MS,GRIP_MM\n";
+            // Başlıklara J4, J5 ve J6 eklendi
+            csvContent += "TIMESTAMP,J1_DEG,J2_DEG,J3_DEG,J4_DEG,J5_DEG,J6_DEG,TCP_X,TCP_Y,TCP_Z,VELOCITY_MS,GRIP_MM\n";
 
-            // Verileri virgülle ayırarak CSV formatına çevir
+            // Tüm eksenleri satır satır CSV formatına dönüştür
             telemetryLogData.forEach(row => {
-                let rowStr = `${row.time},${row.j1},${row.j2},${row.j3},${row.tcp_x},${row.tcp_y},${row.tcp_z},${row.velocity},${row.grip}`;
+                let rowStr = `${row.time},${row.j1},${row.j2},${row.j3},${row.j4},${row.j5},${row.j6},${row.tcp_x},${row.tcp_y},${row.tcp_z},${row.velocity},${row.grip}`;
                 csvContent += rowStr + "\n";
             });
 
-            // Tarayıcı üzerinden dosyayı indir
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `RoKiSim_Telemetry_${new Date().getTime()}.csv`);
+            link.setAttribute("download", `Fanuc_LRMate_Telemetry_${new Date().getTime()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             
-            speakStatus("Telemetry data exported successfully.");
+            speakStatus("Full 6-axis telemetry data exported successfully.");
         });
+
+
+        
         // =========================================================
 
 // =========================================================
@@ -1158,3 +1286,20 @@ function changeEnvironment(envKey) {
 		console.log(`🌍 Ortam değiştirildi: ${environments[envKey].name}`);
 	}
 }
+
+// Düğmeyi DOM yüklendikten sonra zorla bağla
+window.addEventListener('DOMContentLoaded', (event) => {
+    const homeBtn = document.getElementById('home_btn');
+    if (homeBtn) {
+        homeBtn.addEventListener('click', async () => {
+            logToConsole('INFO', 'HOME komutu alındı.');
+            // Hareket başlat
+            await smoothMoveTo(0.3, 0.0, 0.4); 
+            // Açıları sıfırla
+            ['j1','j2','j3','j4','j5','j6'].forEach(k => angles[k] = 0);
+            angles.grip = 0.03;
+            syncControlValues();
+            speakStatus("Robot returned to safe home position.");
+        });
+    }
+});
