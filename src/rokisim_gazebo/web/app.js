@@ -62,7 +62,7 @@ function initDigitalTwin() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(environments[currentEnvironment].color);
     camera3d = new THREE.PerspectiveCamera(45, cW / cH, 0.1, 100);
-    camera3d.position.set(1.5, -1.5, 1.2);
+    camera3d.position.set(1.0, -1.0, 0.7);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.xr.enabled = true;
@@ -76,7 +76,7 @@ function initDigitalTwin() {
     orbitCtrl.enableDamping = true;
     orbitCtrl.dampingFactor = 0.05;
     // Kameranın odak noktasını robotun tam bel hizasına (J2-J3 arasına) alıyoruz
-    orbitCtrl.target.set(0, 0, 0.35); 
+    orbitCtrl.target.set(0, 0, 0.25); 
     
     // Kamerayı çaprazdan, robota tam hakim olacak bir mesafeye (çapraz üst) çekiyoruz
     camera3d.position.set(1.2, -1.2, 0.9); 

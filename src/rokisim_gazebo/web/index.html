@@ -7,7 +7,6 @@
 <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<!-- Load ARButton as an ES module and expose it as a global for legacy scripts -->
 <script type="module">
 import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/webxr/ARButton.js';
 window.ARButton = ARButton;
@@ -30,246 +29,243 @@ window.ARButton = ARButton;
 <span id="status" class="status-badge">SYS: OFFLINE</span>
 </div>
 
-<div class="main-container">
-<div class="visual-column">
-<div style="display: flex; gap: 10px; align-items: center;">
-<h3 style="flex: 1; margin: 0; color: #e67e22;">DIJITAL İKİZ BÖLÜMÜ</h3>
-<button id="toggle_gazebo_btn" style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 12px;" onclick="openGazeboWindow()">👁️ GAZEBO PENCERESİNİ AÇ</button>
-</div>
-<div class="view-panel" id="gazebo-panel" style="display: none; flex: 0; min-height: 200px;">
-<h3>[CAM-01] Gazebo Physics Engine</h3>
-<div class="camera-feed">
-<div class="cam-offline" id="cam-offline-layer">
-<div style="font-size: 18px;">[ NO VIDEO SIGNAL ]</div>
-<span>SIMULATION ENGINE UNREACHABLE</span>
-</div>
-<img id="gazebo-cam" src="http://localhost:8080/stream?topic=/kamera/kamera_sensor/image_raw&type=mjpeg&quality=80" alt="Gazebo Kamerası">
-</div>
-</div>
-<div class="view-panel view-panel-large">
-<h3>[SYS-01] 3D Digital Twin (Local Engine)</h3>
-<div style="display: flex; gap: 10px; margin-bottom: 10px;">
-<label style="color: #ccc; font-size: 11px; display: flex; align-items: center;">
-ORTAM:
-<select id="environment_select" style="background: #050505; color: #00ff00; border: 1px solid #555; border-radius: 3px; padding: 5px; margin-left: 5px; font-family: 'Consolas', monospace; cursor: pointer;" onchange="changeEnvironment(this.value)">
-<option value="default">Varsayılan (Siyah)</option>
-<option value="lab">Laboratuvar (Mavi)</option>
-<option value="kitchen">Mutfak (Açık Kahve)</option>
-<option value="office">Çalışma Masası (Gri)</option>
-<option value="outdoor">Açık Alan (Açık Mavi)</option>
-</select>
-</label>
-</div>
-<div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
-<button id="start_ar_btn" style="background: #27ae60; color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 12px;">🌐 AR'Yİ BAŞLAT</button>
-</div>
-<div id="ar_button_holder" style="margin-top: 0px; display: flex; gap: 10px; align-items: center;"></div>
-<div id="canvas3d-container" style="width: 100%; height: 55vh; min-height: 400px; max-height: 600px; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);"></div>
-</div>
-</div>
+<div class="main-container" style="display: flex; flex-direction: row; gap: 15px; height: calc(100vh - 70px); overflow: hidden; padding: 10px;">
 
-<div class="controls-column">
-<div class="panel panel-ai">
-<h3 style="color: #9b59b6;">[MOD-AI] Computer Vision</h3>
-<div id="cv-container">
-<div id="cv_status">AWAITING CAMERA...</div>
-<video id="input_video" style="display:none;"></video>
-<canvas id="output_canvas" width="400" height="200"></canvas>
-</div>
-<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
-<span style="color: #ccc; font-size: 11px;">VOICE ASSIST:</span>
-<button id="mic_btn" style="background: #c0392b; color: white; border: 1px solid #e74c3c; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold;">🎙️ START MIC</button>
-</div>
-<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
-<span style="color: #ccc; font-size: 11px;">CMD OVERRIDE:</span>
-<div style="display: flex; gap: 5px;">
-<input type="text" id="cmd_input" placeholder="Örn: küp" style="width: 120px; background: #050505; color: #00ff00; border: 1px solid #555; border-radius: 3px; padding: 5px; font-family: 'Consolas', monospace; outline: none;">
-<button id="cmd_btn" style="background: #2980b9; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold;">SEND</button>
-</div>
-</div>
-
-<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
-<span style="color: #ccc;">ENABLE AI OVERRIDE:</span>
-<label style="display: flex; align-items: center; cursor: pointer; color: #00ff00;">
-<input type="checkbox" id="ai_toggle" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #9b59b6;"> ON
-</label>
-</div>
-</div>
-
-<div class="panel panel-math">
-<h3 style="color: #f1c40f;">[DATA] Real-Time Telemetry</h3>
-<div class="math-box">
-<div style="display: flex; justify-content: space-between;">
-<div>
-<div id="math_x" style="color: #e67e22;">POS_X: 0.000</div>
-<div id="math_y" style="color: #27ae60;">POS_Y: 0.000</div>
-<div id="math_z" style="color: #3498db;">POS_Z: 0.000</div>
-</div>
-<div style="border-left: 1px solid #444; padding-left: 10px;">
-<div id="math_roll" style="color: #ccc;">ROLL : 0.00°</div>
-<div id="math_pitch" style="color: #ccc;">PITCH: 0.00°</div>
-<div id="math_yaw" style="color: #ccc;">YAW : 0.00°</div>
-</div>
-</div>
-</div>
-</div>
-
-<div style="margin-bottom: 15px;">
-                <button id="console_btn" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: 2px solid #5e3370; padding: 12px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; border-radius: 4px; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.4); text-transform: uppercase; letter-spacing: 2px; transition: 0.2s;">
-                    💻 SİSTEM LOGLARI VE GÖREV DİZİSİ (SCRIPT) AÇ
-                </button>
+    <div id="left-panel" style="flex: 1; height: 100%; overflow-y: auto; padding-right: 10px; padding-bottom: 50px; display: flex; flex-direction: column; gap: 15px;">
+        
+        <div class="panel panel-ai">
+            <h3 style="color: #9b59b6;">[MOD-AI] Computer Vision</h3>
+            <div id="cv-container">
+                <div id="cv_status">AWAITING CAMERA...</div>
+                <video id="input_video" style="display:none;"></video>
+                <canvas id="output_canvas" width="400" height="200"></canvas>
             </div>
-
-<div class="panel panel-ik">
-<h3 style="color: #2ecc71;">[CMD] Inverse Kinematics</h3>
-<div class="data-row"><span class="data-label">TRG_X:</span><input type="number" id="tX" step="0.05" value="0.3"></div>
-<div class="data-row"><span class="data-label">TRG_Y:</span><input type="number" id="tY" step="0.05" value="0.2"></div>
-<div class="data-row"><span class="data-label">TRG_Z:</span><input type="number" id="tZ" step="0.05" value="0.4"></div>
-<button class="btn" onclick="jogToTarget()">EXECUTE JOG</button>
-<div id="ik_status">SYS: IDLE</div>
-</div>
-
-<div class="panel panel-jog-group" style="border-top: 3px solid #f39c12; margin-top: 15px;">
-    <h3 style="color: #f39c12;">[CTRL] GRUP JOGLAMA (TEACH PENDANT)</h3>
-    
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <div style="flex: 1; background: #111; padding: 8px; border-radius: 4px; border: 1px solid #333;">
-            <div style="color: #3498db; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">CARTESIAN (XYZ)</div>
-            <div style="display: flex; justify-content: space-between; gap: 5px;">
-                <button id="jog_x_m" class="jog-btn" style="background:#2980b9; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-X</button>
-                <button id="jog_x_p" class="jog-btn" style="background:#2980b9; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+X</button>
+            <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                <span style="color: #ccc; font-size: 11px;">VOICE ASSIST:</span>
+                <button id="mic_btn" style="background: #c0392b; color: white; border: 1px solid #e74c3c; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold;">🎙️ START MIC</button>
             </div>
-            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
-                <button id="jog_y_m" class="jog-btn" style="background:#27ae60; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-Y</button>
-                <button id="jog_y_p" class="jog-btn" style="background:#27ae60; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+Y</button>
+            <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                <span style="color: #ccc; font-size: 11px;">CMD OVERRIDE:</span>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="cmd_input" placeholder="Örn: küp" style="width: 120px; background: #050505; color: #00ff00; border: 1px solid #555; border-radius: 3px; padding: 5px; font-family: 'Consolas', monospace; outline: none;">
+                    <button id="cmd_btn" style="background: #2980b9; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; font-weight: bold;">SEND</button>
+                </div>
             </div>
-            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
-                <button id="jog_z_m" class="jog-btn" style="background:#8e44ad; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-Z</button>
-                <button id="jog_z_p" class="jog-btn" style="background:#8e44ad; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+Z</button>
+            <div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                <span style="color: #ccc;">ENABLE AI OVERRIDE:</span>
+                <label style="display: flex; align-items: center; cursor: pointer; color: #00ff00;">
+                    <input type="checkbox" id="ai_toggle" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #9b59b6;"> ON
+                </label>
             </div>
         </div>
 
-        <div style="flex: 1; background: #111; padding: 8px; border-radius: 4px; border: 1px solid #333;">
-            <div style="color: #e67e22; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">JOINT (EKSEN)</div>
-            <div style="display: flex; justify-content: space-between; gap: 5px;">
-                <button id="jog_j1_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J1</button>
-                <button id="jog_j1_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J1</button>
+        <div class="panel panel-math">
+            <h3 style="color: #f1c40f;">[DATA] Real-Time Telemetry</h3>
+            <div class="math-box">
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <div id="math_x" style="color: #e67e22;">POS_X: 0.000</div>
+                        <div id="math_y" style="color: #27ae60;">POS_Y: 0.000</div>
+                        <div id="math_z" style="color: #3498db;">POS_Z: 0.000</div>
+                    </div>
+                    <div style="border-left: 1px solid #444; padding-left: 10px;">
+                        <div id="math_roll" style="color: #ccc;">ROLL : 0.00°</div>
+                        <div id="math_pitch" style="color: #ccc;">PITCH: 0.00°</div>
+                        <div id="math_yaw" style="color: #ccc;">YAW : 0.00°</div>
+                    </div>
+                </div>
             </div>
-            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
-                <button id="jog_j2_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J2</button>
-                <button id="jog_j2_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J2</button>
-            </div>
-            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
-                <button id="jog_j3_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J3</button>
-                <button id="jog_j3_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J3</button>
+        </div>
+
+        <div>
+            <button id="console_btn" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: 2px solid #5e3370; padding: 12px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; border-radius: 4px; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.4); text-transform: uppercase; letter-spacing: 2px; transition: 0.2s;">
+                💻 SİSTEM LOGLARI VE GÖREV DİZİSİ (SCRIPT) AÇ
+            </button>
+        </div>
+
+        <div class="panel panel-ik">
+            <h3 style="color: #2ecc71;">[CMD] Inverse Kinematics</h3>
+            <div class="data-row"><span class="data-label">TRG_X:</span><input type="number" id="tX" step="0.05" value="0.3"></div>
+            <div class="data-row"><span class="data-label">TRG_Y:</span><input type="number" id="tY" step="0.05" value="0.2"></div>
+            <div class="data-row"><span class="data-label">TRG_Z:</span><input type="number" id="tZ" step="0.05" value="0.4"></div>
+            <button class="btn" onclick="jogToTarget()">EXECUTE JOG</button>
+            <div id="ik_status">SYS: IDLE</div>
+        </div>
+
+        <div class="panel panel-jog-group" style="border-top: 3px solid #f39c12;">
+            <h3 style="color: #f39c12;">[CTRL] GRUP JOGLAMA (TEACH PENDANT)</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 1; background: #111; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+                    <div style="color: #3498db; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">CARTESIAN (XYZ)</div>
+                    <div style="display: flex; justify-content: space-between; gap: 5px;">
+                        <button id="jog_x_m" class="jog-btn" style="background:#2980b9; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-X</button>
+                        <button id="jog_x_p" class="jog-btn" style="background:#2980b9; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+X</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                        <button id="jog_y_m" class="jog-btn" style="background:#27ae60; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-Y</button>
+                        <button id="jog_y_p" class="jog-btn" style="background:#27ae60; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+Y</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                        <button id="jog_z_m" class="jog-btn" style="background:#8e44ad; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-Z</button>
+                        <button id="jog_z_p" class="jog-btn" style="background:#8e44ad; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+Z</button>
+                    </div>
+                </div>
+                <div style="flex: 1; background: #111; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+                    <div style="color: #e67e22; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">JOINT (EKSEN)</div>
+                    <div style="display: flex; justify-content: space-between; gap: 5px;">
+                        <button id="jog_j1_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J1</button>
+                        <button id="jog_j1_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J1</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                        <button id="jog_j2_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J2</button>
+                        <button id="jog_j2_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J2</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                        <button id="jog_j3_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J3</button>
+                        <button id="jog_j3_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J3</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="panel panel-dh" style="border-top: 3px solid #f1c40f; margin-top: 15px;">
-    <h3 style="color: #f1c40f;">[MATH] DENAVIT-HARTENBERG (DH) TABLOSU</h3>
-    <table style="width:100%; color:#fff; font-family:'Consolas',monospace; font-size:11px; text-align:center; border-collapse:collapse;">
-        <tr style="background:#333; color:#f1c40f; border-bottom: 2px solid #555;">
-            <th style="padding: 5px;">İ (Link)</th>
-            <th>θ (Theta)</th>
-            <th>d (mm)</th>
-            <th>a (mm)</th>
-            <th>α (Alpha)</th>
-        </tr>
-        <tr id="dh_row_1" style="transition: background 0.2s;"><td style="padding: 4px;">1 (Base)</td><td id="dh_t1">0.0°</td><td>330</td><td>50</td><td>-90°</td></tr>
-        <tr id="dh_row_2" style="transition: background 0.2s;"><td style="padding: 4px;">2 (Shldr)</td><td id="dh_t2">0.0°</td><td>0</td><td>330</td><td>0°</td></tr>
-        <tr id="dh_row_3" style="transition: background 0.2s;"><td style="padding: 4px;">3 (Elbow)</td><td id="dh_t3">0.0°</td><td>0</td><td>35</td><td>-90°</td></tr>
-        <tr id="dh_row_4" style="transition: background 0.2s;"><td style="padding: 4px;">4 (Wrst1)</td><td id="dh_t4">0.0°</td><td>335</td><td>0</td><td>90°</td></tr>
-        <tr id="dh_row_5" style="transition: background 0.2s;"><td style="padding: 4px;">5 (Wrst2)</td><td id="dh_t5">0.0°</td><td>0</td><td>0</td><td>-90°</td></tr>
-        <tr id="dh_row_6" style="transition: background 0.2s;"><td style="padding: 4px;">6 (Flange)</td><td id="dh_t6">0.0°</td><td>80</td><td>0</td><td>0°</td></tr>
-    </table>
-    <div style="font-size: 9px; color: #888; text-align: right; margin-top: 5px;">* Değerler FANUC LR Mate 200iD referansıdır.</div>
-</div>
+    <div id="center-panel" class="visual-column" style="flex: 2; display: flex; flex-direction: column;">
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <h3 style="flex: 1; margin: 0; color: #e67e22;">DIJITAL İKİZ BÖLÜMÜ</h3>
+            <button id="toggle_gazebo_btn" style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 12px;" onclick="openGazeboWindow()">👁️ GAZEBO PENCERESİNİ AÇ</button>
+        </div>
+        
+        <div class="view-panel" id="gazebo-panel" style="display: none; flex: 0; min-height: 200px;">
+            <h3>[CAM-01] Gazebo Physics Engine</h3>
+            <div class="camera-feed">
+                <div class="cam-offline" id="cam-offline-layer">
+                    <div style="font-size: 18px;">[ NO VIDEO SIGNAL ]</div>
+                    <span>SIMULATION ENGINE UNREACHABLE</span>
+                </div>
+                <img id="gazebo-cam" src="http://localhost:8080/stream?topic=/kamera/kamera_sensor/image_raw&type=mjpeg&quality=80" alt="Gazebo Kamerası">
+            </div>
+        </div>
+        
+        <div class="view-panel view-panel-large" style="flex: 1; display: flex; flex-direction: column;">
+            <h3>[SYS-01] 3D Digital Twin (Local Engine)</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <label style="color: #ccc; font-size: 11px; display: flex; align-items: center;">
+                    ORTAM:
+                    <select id="environment_select" style="background: #050505; color: #00ff00; border: 1px solid #555; border-radius: 3px; padding: 5px; margin-left: 5px; font-family: 'Consolas', monospace; cursor: pointer;" onchange="changeEnvironment(this.value)">
+                        <option value="default">Varsayılan (Siyah)</option>
+                        <option value="lab">Laboratuvar (Mavi)</option>
+                        <option value="kitchen">Mutfak (Açık Kahve)</option>
+                        <option value="office">Çalışma Masası (Gri)</option>
+                        <option value="outdoor">Açık Alan (Açık Mavi)</option>
+                    </select>
+                </label>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
+                <button id="start_ar_btn" style="background: #27ae60; color: white; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 12px;">🌐 AR'Yİ BAŞLAT</button>
+            </div>
+            <div id="ar_button_holder" style="margin-top: 0px; display: flex; gap: 10px; align-items: center;"></div>
+            
+            <div id="canvas3d-container" style="width: 100%; flex: 1; min-height: 400px; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle, #1a1a1a 0%, #050505 100%);"></div>
+        </div>
+    </div>
 
-<div class="panel panel-joy">
-<h3 style="color: #e74c3c;">[CTRL] Analog Override</h3>
-<div class="joystick-wrapper">
-<div class="joystick-zone" id="joyZone"><div class="joystick-knob" id="joyKnob"></div></div>
-</div>
-</div>
+    <div id="right-panel" style="flex: 1; height: 100%; overflow-y: auto; padding-right: 10px; padding-bottom: 50px; display: flex; flex-direction: column; gap: 15px;">
+        
+        <div class="panel panel-dh" style="border-top: 3px solid #f1c40f;">
+            <h3 style="color: #f1c40f;">[MATH] DENAVIT-HARTENBERG (DH) TABLOSU</h3>
+            <table style="width:100%; color:#fff; font-family:'Consolas',monospace; font-size:11px; text-align:center; border-collapse:collapse;">
+                <tr style="background:#333; color:#f1c40f; border-bottom: 2px solid #555;">
+                    <th style="padding: 5px;">İ (Link)</th><th>θ (Theta)</th><th>d (mm)</th><th>a (mm)</th><th>α (Alpha)</th>
+                </tr>
+                <tr id="dh_row_1" style="transition: background 0.2s;"><td style="padding: 4px;">1 (Base)</td><td id="dh_t1">0.0°</td><td>330</td><td>50</td><td>-90°</td></tr>
+                <tr id="dh_row_2" style="transition: background 0.2s;"><td style="padding: 4px;">2 (Shldr)</td><td id="dh_t2">0.0°</td><td>0</td><td>330</td><td>0°</td></tr>
+                <tr id="dh_row_3" style="transition: background 0.2s;"><td style="padding: 4px;">3 (Elbow)</td><td id="dh_t3">0.0°</td><td>0</td><td>35</td><td>-90°</td></tr>
+                <tr id="dh_row_4" style="transition: background 0.2s;"><td style="padding: 4px;">4 (Wrst1)</td><td id="dh_t4">0.0°</td><td>335</td><td>0</td><td>90°</td></tr>
+                <tr id="dh_row_5" style="transition: background 0.2s;"><td style="padding: 4px;">5 (Wrst2)</td><td id="dh_t5">0.0°</td><td>0</td><td>0</td><td>-90°</td></tr>
+                <tr id="dh_row_6" style="transition: background 0.2s;"><td style="padding: 4px;">6 (Flange)</td><td id="dh_t6">0.0°</td><td>80</td><td>0</td><td>0°</td></tr>
+            </table>
+            <div style="font-size: 9px; color: #888; text-align: right; margin-top: 5px;">* Değerler FANUC LR Mate 200iD referansıdır.</div>
+        </div>
 
-<div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #444;">
-<h3 style="color: #aaa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0; text-align: center;">[DATA] TELEMETRİ MERKEZİ</h3>
-<div style="display: flex; gap: 5px;">
-<button id="pos_btn" style="flex: 1; background: #3498db; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">📈 KONUM</button>
-<button id="load_btn" style="flex: 1; background: #e67e22; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">⚡ TORK</button>
-<button id="vel_btn" style="flex: 1; background: #9b59b6; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">🚀 TCP HIZ</button>
-</div>
+        <div class="panel panel-joy">
+            <h3 style="color: #e74c3c;">[CTRL] Analog Override</h3>
+            <div class="joystick-wrapper">
+                <div class="joystick-zone" id="joyZone"><div class="joystick-knob" id="joyKnob"></div></div>
+            </div>
+        </div>
 
-<div style="margin-top: 10px;">
+        <div style="padding-top: 15px; border-top: 2px dashed #444;">
+            <h3 style="color: #aaa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0; text-align: center;">[DATA] TELEMETRİ MERKEZİ</h3>
+            <div style="display: flex; gap: 5px;">
+                <button id="pos_btn" style="flex: 1; background: #3498db; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">📈 KONUM</button>
+                <button id="load_btn" style="flex: 1; background: #e67e22; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">⚡ TORK</button>
+                <button id="vel_btn" style="flex: 1; background: #9b59b6; color: white; border: none; padding: 10px 2px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; font-size: 11px;">🚀 TCP HIZ</button>
+            </div>
+            <div style="margin-top: 10px;">
                 <button id="export_csv_btn" style="background: #2c3e50; color: #1abc9c; border: 1px solid #1abc9c; padding: 8px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s; display: flex; justify-content: space-between; align-items: center;">
                     <span>📥 TELEMETRİ VERİSİNİ DIŞA AKTAR (.CSV)</span>
                     <span id="log_count" style="color: #888; font-size: 10px;">0 KAYIT</span>
                 </button>
             </div>
+        </div>
 
-</div>
-<div style="margin-top: 10px;">
-<button id="axes_btn" style="background: #8e44ad; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
-📌 EKSENLERİ GÖSTER (X-Y-Z)
-</button>
-</div>
+        <div>
+            <button id="axes_btn" style="background: #8e44ad; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
+                📌 EKSENLERİ GÖSTER (X-Y-Z)
+            </button>
+        </div>
 
-<div style="margin-top: 10px;">
-<button id="workspace_btn" style="background: #2980b9; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
-🌐 WORKSPACE GÖSTER
-</button>
-</div>
+        <div>
+            <button id="workspace_btn" style="background: #2980b9; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
+                🌐 WORKSPACE GÖSTER
+            </button>
+        </div>
 
-<div style="margin-top: 10px;">
-    <button id="home_btn" style="background: #2c3e50; color: #f1c40f; border: 1px solid #f1c40f; padding: 10px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
-        🏠 ROBOTU HOME KONUMUNA ÇEK (SAFE RESET)
-    </button>
-</div>
+        <div>
+            <button id="home_btn" style="background: #2c3e50; color: #f1c40f; border: 1px solid #f1c40f; padding: 10px; border-radius: 4px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; transition: 0.3s;">
+                🏠 ROBOTU HOME KONUMUNA ÇEK (SAFE RESET)
+            </button>
+        </div>
 
-<div class="switch-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
-<span style="color: #ccc; font-size: 11px;">TEACH PENDANT:</span>
-<div style="display: flex; gap: 5px;">
-<button id="rec_btn" style="background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; width: 50%;">🔴 REC</button>
-<button id="play_btn" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; width: 50%;">▶️ PLAY</button>
-</div>
-</div>
+        <div class="switch-row" style="border-top: 1px solid #444; padding-top: 10px;">
+            <span style="color: #ccc; font-size: 11px;">TEACH PENDANT:</span>
+            <div style="display: flex; gap: 5px;">
+                <button id="rec_btn" style="background: #c0392b; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; width: 50%;">🔴 REC</button>
+                <button id="play_btn" style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; width: 50%;">▶️ PLAY</button>
+            </div>
+        </div>
 
-<div class="panel panel-jog">
-<h3 style="color: #3498db;">[JOG] Joint Diagnostics</h3>
-<div class="data-row"><span class="data-label">J1_BASE :</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j1_s"> <span id="v1" style="color:#fff">0.00°</span></div>
-<div class="data-row"><span class="data-label">J2_SHLDR:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="-0.45" id="j2_s"> <span id="v2" style="color:#fff">-25.79°</span></div>
-<div class="data-row"><span class="data-label">J3_ELBOW:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="1.20" id="j3_s"> <span id="v3" style="color:#fff">68.75°</span></div>
-<div class="data-row"><span class="data-label">J4_WRST1:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0.20" id="j4_s"> <span id="v4" style="color:#fff">11.46°</span></div>
-<div class="data-row"><span class="data-label">J5_WRST2:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0.35" id="j5_s"> <span id="v5" style="color:#fff">20.06°</span></div>
-<div class="data-row"><span class="data-label">J6_FLNGE:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j6_s"> <span id="v6" style="color:#fff">0.00°</span></div>
-</div>
+        <div class="panel panel-jog">
+            <h3 style="color: #3498db;">[JOG] Joint Diagnostics</h3>
+            <div class="data-row"><span class="data-label">J1_BASE :</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j1_s"> <span id="v1" style="color:#fff">0.00°</span></div>
+            <div class="data-row"><span class="data-label">J2_SHLDR:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="-0.45" id="j2_s"> <span id="v2" style="color:#fff">-25.79°</span></div>
+            <div class="data-row"><span class="data-label">J3_ELBOW:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="1.20" id="j3_s"> <span id="v3" style="color:#fff">68.75°</span></div>
+            <div class="data-row"><span class="data-label">J4_WRST1:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0.20" id="j4_s"> <span id="v4" style="color:#fff">11.46°</span></div>
+            <div class="data-row"><span class="data-label">J5_WRST2:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0.35" id="j5_s"> <span id="v5" style="color:#fff">20.06°</span></div>
+            <div class="data-row"><span class="data-label">J6_FLNGE:</span> <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="j6_s"> <span id="v6" style="color:#fff">0.00°</span></div>
+        </div>
 
-<div class="panel panel-grip">
-<h3 style="color: #e67e22;">[ACT] End Effector</h3>
-<div class="data-row">
-<span class="data-label">JAW_GAP :</span>
-<input type="range" min="0.0" max="0.125" step="0.001" value="0.03" id="grip_s">
-<span id="grip_v" style="color: #e67e22;">30.00 mm</span>
-</div>
-</div>
+        <div class="panel panel-grip">
+            <h3 style="color: #e67e22;">[ACT] End Effector</h3>
+            <div class="data-row">
+                <span class="data-label">JAW_GAP :</span>
+                <input type="range" min="0.0" max="0.125" step="0.001" value="0.03" id="grip_s">
+                <span id="grip_v" style="color: #e67e22;">30.00 mm</span>
+            </div>
+        </div>
 
-<div class="panel" style="border-top: 3px solid #95a5a6;">
-<h3 style="color: #95a5a6;">[CAM] Orbit Control</h3>
-<div class="data-row">
-<span class="data-label">AZIMUTH :</span>
-<input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="cam_slider">
-<span id="cam_val" style="color: #fff;">0.00°</span>
-</div>
-</div>
+        <div class="panel" style="border-top: 3px solid #95a5a6;">
+            <h3 style="color: #95a5a6;">[CAM] Orbit Control</h3>
+            <div class="data-row">
+                <span class="data-label">AZIMUTH :</span>
+                <input type="range" min="-3.14" max="3.14" step="0.01" value="0" id="cam_slider">
+                <span id="cam_val" style="color: #fff;">0.00°</span>
+            </div>
+        </div>
+        
+    </div>
 
-</div>
-</div>
-
-</div>
-
-<div id="pos_modal" style="display: none; position: fixed; top: 5%; left: 5%; width: 550px; height: 800px; background: rgba(15, 15, 15, 0.98); border: 2px solid #3498db; border-radius: 8px; z-index: 9999; box-shadow: 0 0 40px #000; flex-direction: column;">
+</div> <div id="pos_modal" style="display: none; position: fixed; top: 5%; left: 5%; width: 550px; height: 800px; background: rgba(15, 15, 15, 0.98); border: 2px solid #3498db; border-radius: 8px; z-index: 9999; box-shadow: 0 0 40px #000; flex-direction: column;">
 <div id="pos_header" style="background: #1a1a1a; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; cursor: move;">
 <span style="color: #3498db; font-family: 'Consolas'; font-weight: bold;">[DATA] JOINT POSITIONS (DEG)</span>
 <button onclick="document.getElementById('pos_modal').style.display='none'" style="background:#c0392b; color:white; border:none; border-radius:4px; padding:2px 10px; cursor:pointer;">X</button>
@@ -344,14 +340,7 @@ ORTAM:
     </div>
 </div>
 
-
 <script src="app.js"></script>
-
-
-
-
-
-
 
 <div id="ar-overlay-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999;">
     <button id="ar_mic_btn" style="
@@ -376,12 +365,6 @@ ORTAM:
         🎤
     </button>
 </div>
-
-
-
-
-
-
 
 </body>
 </html>
