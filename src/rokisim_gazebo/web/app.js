@@ -35,6 +35,7 @@ if(gazeboCam && offlineLayer) {
 THREE.Object3D.DefaultUp.set(0, 0, 1);
 let container, scene, camera3d, renderer, orbitCtrl;
 let robotBase, j1P, j2P, j3P, j4P, j5P, j6P, gripBase, gripperLeftFinger, gripperRightFinger;
+let robotMeshes = {}; // Hangi parçanın hangi mesh'e ait olduğunu tutacak
 let gripM = { updateGripperPosition: function() {} };
 let arButton, reticle, hitTestSource = null, hitTestSourceRequested = false;
 
@@ -130,41 +131,39 @@ function initDigitalTwin() {
     // ⬇️ STL MODELLERİNİ ASENKRON OLARAK EKLEMLERE YÜKLE (HATA YAKALAMALI)
     // =========================================================================
     
-    function loadFanucPart(file, parentGroup, material) {
+    // ⬇️ STL MODELLERİNİ YÜKLE VE BAĞIMSIZ MATERYAL ATAYARAK HAFIZAYA AL
+    function loadFanucPart(file, parentGroup, material, jointKey) {
         stlLoader.load('models/' + file, 
             function(geo) { 
                 console.log("BAŞARILI: " + file + " yüklendi.");
-                geo.computeVertexNormals(); // Işık ve gölgelerin doğru hesaplanması için
+                geo.computeVertexNormals(); 
                 
-                let mesh = new THREE.Mesh(geo, material);
+                // 🚨 KRİTİK: Her parçaya material.clone() ile BAĞIMSIZ bir materyal veriyoruz.
+                // Böylece birinin rengini değiştirince diğeri etkilenmez.
+                let mesh = new THREE.Mesh(geo, material.clone());
                 
-                // 🚨 EĞER ROBOT EKRANI KAPLIYORSA VEYA GÖRÜNMÜYORSA ŞU SATIRIN BAŞINDAKİ // İŞARETLERİNİ SİL:
-                // mesh.scale.set(0.001, 0.001, 0.001); 
-
-                // ROS X ekseni ile Three.js hizalaması (Bazen parçalar yan yatmış gelebilir)
-                // Eğer robot parçalanmış görünürse bu satırı aktif edeceğiz.
-                // mesh.rotation.x = -Math.PI / 2;
-
+                // mesh.scale.set(0.001, 0.001, 0.001); // Gerekirse aç
                 parentGroup.add(mesh); 
+                
+                // Eğer bu bir eklem (joint) ise, onu sonradan renklendirmek için kaydet
+                if (jointKey) robotMeshes[jointKey] = mesh;
             },
-            undefined, // Yükleme yüzdesi (boş geçiyoruz)
+            undefined, 
             function(err) { 
-                console.error("HATA! " + file + " bulunamadı! İsim veya Klasör hatalı:", err);
-                // Ekranda hatayı anında görmek için sağ üstteki yazıyı KIRMIZI yap:
-                document.getElementById('status').innerText = "ERR: STL BULUNAMADI!";
-                document.getElementById('status').style.backgroundColor = "#e74c3c";
+                console.error("HATA! " + file + " bulunamadı!", err);
             }
         );
     }
 
     // Parçaları sırayla akıllı motora gönder
-    loadFanucPart('base_link.stl', robotBase, fanucDark);
-    loadFanucPart('link_1.stl', j1P, fanucYellow);
-    loadFanucPart('link_2.stl', j2P, fanucYellow);
-    loadFanucPart('link_3.stl', j3P, fanucYellow);
-    loadFanucPart('link_4.stl', j4P, fanucYellow);
-    loadFanucPart('link_5.stl', j5P, fanucYellow);
-    loadFanucPart('link_6.stl', j6P, fanucDark);
+    // Parçaları sırayla akıllı motora gönder ve etiketle
+    loadFanucPart('base_link.stl', robotBase, fanucDark, 'base');
+    loadFanucPart('link_1.stl', j1P, fanucYellow, 'j1');
+    loadFanucPart('link_2.stl', j2P, fanucYellow, 'j2');
+    loadFanucPart('link_3.stl', j3P, fanucYellow, 'j3');
+    loadFanucPart('link_4.stl', j4P, fanucYellow, 'j4');
+    loadFanucPart('link_5.stl', j5P, fanucYellow, 'j5');
+    loadFanucPart('link_6.stl', j6P, fanucDark, 'j6');
 
     // --- GRIPPER (TUTUCU) SİSTEMİNİ KORUMA ---
     // Eski kodlarındaki parmak tutma işlevlerinin bozulmaması için j6P'nin ucuna siyah şık bir tutucu ekliyoruz.
@@ -532,10 +531,35 @@ vData.push(smoothedVelocity); vData.shift();
 velChart.update();
 }
 
-lastA = {...angles};
-lastPos.copy(currentPos);
+// --- DINAMİK EKLEM RENKLENDİRME VE CANLI DH TABLOSU ---
+        ['j1', 'j2', 'j3', 'j4', 'j5', 'j6'].forEach((k, idx) => {
+            // 1. DH Tablosundaki açıları anlık güncelle
+            let t_val = (angles[k] * 180 / Math.PI);
+            // J2 için Fanuc DH modelinde genellikle 90 derece ofset vardır, görsel olarak yansıtıyoruz
+            if (k === 'j2') t_val = t_val - 90; 
+            
+            let dhTextEl = document.getElementById('dh_t' + (idx + 1));
+            if(dhTextEl) dhTextEl.innerText = t_val.toFixed(1) + '°';
+
+            // 2. Hareket Analizi (Hem 3D modeli hem de DH Tablosunu renklendir)
+            if (robotMeshes[k]) {
+                let diff = Math.abs(angles[k] - lastA[k]);
+                let dhRow = document.getElementById('dh_row_' + (idx + 1));
+
+                if (diff > 0.005) { 
+                    // MOTOR ÇALIŞIYOR: 3D Model Kızarır, DH Tablosundaki satır Kızarır
+                    robotMeshes[k].material.emissive.setHex(0x772200); 
+                    if(dhRow) dhRow.style.backgroundColor = '#772200';
+                } else {
+                    // MOTOR DURDU: Soğuma
+                    robotMeshes[k].material.emissive.setHex(0x000000); 
+                    if(dhRow) dhRow.style.backgroundColor = 'transparent';
+                }
+            }
+        });
+        lastA = {...angles};
+    lastPos.copy(currentPos);
 }, 100);
-// =========================================================
 
 // =========================================================
 // ANIMATE 3D (DİJİTAL İKİZ DÖNGÜSÜ)
@@ -699,24 +723,9 @@ let dist = Math.sqrt(x*x + y*y); if(dist > 30) { x = (x/dist) * 30; y = (y/dist)
 joyKnob.style.transform = `translate(${x}px, ${y}px)`; joyDX = x / 30; joyDY = y / 30; 
 });
 
-// 📈 1. VERİ GÜNCELLEME DÖNGÜSÜ (Grafikler için olan setInterval)
-setInterval(() => {
-    // 🛠️ YENİ KORUMA: AR modundaysak grafik güncellemelerini tamamen askıya al
-    if (renderer && renderer.xr && renderer.xr.isPresenting) return; 
-
-    let currentPos = getEndEffectorPos(angles);
-    // ... grafik kodların aynen devam ediyor ...
-}, 100);
 
 
-// 📥 2. [MOD-EXPORT] DATA LOGGER DÖNGÜSÜ (CSV için olan setInterval)
-setInterval(() => {
-    // 🛠️ YENİ KORUMA: AR modundaysak arka planda CSV log kaydı tutmayı durdur
-    if (renderer && renderer.xr && renderer.xr.isPresenting) return; 
 
-    if (!isRosConnected && angles.j1 === 0 && angles.j2 === 0) return;
-    // ... CSV log toplama kodların aynen devam ediyor ...
-}, 100);
 
 function bindSlider(id, val_id, key, multiplier, suffix) {
 document.getElementById(id).oninput = function() { 
@@ -1052,13 +1061,20 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
         // 3. Yardımcı Fonksiyonlar (Wait ve Slew Rate Kontrol)
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
-        // 🛠️ YUMUŞATILMIŞ HAREKET MOTORU (Tüm sistem bunu kullanacak)
+        // 🛠️ YUMUŞATILMIŞ HAREKET MOTORU (Titreşim Korumalı)
+        let isMoving = false; // Sistem kilidi
+
         async function smoothMoveTo(targetX, targetY, targetZ) {
-            let startX = parseFloat(document.getElementById('tX').value);
-            let startY = parseFloat(document.getElementById('tY').value);
-            let startZ = parseFloat(document.getElementById('tZ').value);
+            if (isMoving) return; // Robot zaten hareket ediyorsa yeni tıklamaları reddet
+            isMoving = true;
+
+            // Başlangıç noktasını kutulardan değil, robotun gerçek konumundan al!
+            let currentP = getEndEffectorPos(angles);
+            let startX = currentP.x;
+            let startY = currentP.y;
+            let startZ = currentP.z;
             
-            let steps = 50; 
+            let steps = 30; // Joglama daha seri hissettirsin diye 50'den 30'a düşürdük
             for(let i = 1; i <= steps; i++) {
                 let t = i / steps;
                 document.getElementById('tX').value = (startX + (targetX - startX) * t).toFixed(3);
@@ -1066,8 +1082,9 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
                 document.getElementById('tZ').value = (startZ + (targetZ - startZ) * t).toFixed(3);
                 
                 solveIK(); 
-                await delay(20); 
+                await delay(15); // Hızı biraz artırdık (daha akıcı)
             }
+            isMoving = false; // Hareket bitince kilidi aç
         }
 
         // 4. Endüstriyel Macro Script Çözücü
@@ -1301,5 +1318,72 @@ window.addEventListener('DOMContentLoaded', (event) => {
             syncControlValues();
             speakStatus("Robot returned to safe home position.");
         });
+    }
+});
+
+// =========================================================
+// [MOD-JOG] ENDÜSTRİYEL GRUP JOGLAMA (TEACH PENDANT)
+// =========================================================
+const jogStepXYZ = 0.02; // Kartezyen adım (2 cm)
+const jogStepJoint = 0.05; // Eksen adımı (yaklaşık 2.8 derece)
+
+window.addEventListener('DOMContentLoaded', () => {
+    // 1. Kartezyen (XYZ) Joglama Bağlantıları
+    // 1. Kartezyen (XYZ) Joglama Bağlantıları
+    const jogMapXYZ = {
+        'jog_x_p': { axis: 'tX', dir: 1 }, 'jog_x_m': { axis: 'tX', dir: -1 },
+        'jog_y_p': { axis: 'tY', dir: 1 }, 'jog_y_m': { axis: 'tY', dir: -1 },
+        'jog_z_p': { axis: 'tZ', dir: 1 }, 'jog_z_m': { axis: 'tZ', dir: -1 }
+    };
+
+    for (let btnId in jogMapXYZ) {
+        let btn = document.getElementById(btnId);
+        if(btn) {
+            btn.addEventListener('click', async () => {
+                if (isMoving) return; // Motor kilitliyse komutu es geç
+                
+                // Nereye gideceğimizi şu anki fiziksel pozisyona göre hesapla
+                let currentP = getEndEffectorPos(angles);
+                let tX = currentP.x;
+                let tY = currentP.y;
+                let tZ = currentP.z;
+
+                let axis = jogMapXYZ[btnId].axis; 
+                let dir = jogMapXYZ[btnId].dir;
+                
+                if (axis === 'tX') tX += jogStepXYZ * dir;
+                if (axis === 'tY') tY += jogStepXYZ * dir;
+                if (axis === 'tZ') tZ += jogStepXYZ * dir;
+                
+                logToConsole('CMD', `JOG: ${axis} yönünde hareket`);
+                await smoothMoveTo(tX, tY, tZ); 
+            });
+        }
+    }
+
+    // 2. Joint (Eksen) Joglama Bağlantıları
+    const jogMapJoint = {
+        'jog_j1_p': { j: 'j1', dir: 1 }, 'jog_j1_m': { j: 'j1', dir: -1 },
+        'jog_j2_p': { j: 'j2', dir: 1 }, 'jog_j2_m': { j: 'j2', dir: -1 },
+        'jog_j3_p': { j: 'j3', dir: 1 }, 'jog_j3_m': { j: 'j3', dir: -1 }
+    };
+
+    for (let btnId in jogMapJoint) {
+        let btn = document.getElementById(btnId);
+        if(btn) {
+            btn.addEventListener('click', () => {
+                let joint = jogMapJoint[btnId].j;
+                angles[joint] += jogStepJoint * jogMapJoint[btnId].dir;
+                syncControlValues(); // Arayüzdeki sliderları güncelle
+                
+                // İleri kinematik ile TCP (hedef) kutularını eşitle
+                let currentP = getEndEffectorPos(angles);
+                document.getElementById('tX').value = currentP.x.toFixed(3);
+                document.getElementById('tY').value = currentP.y.toFixed(3);
+                document.getElementById('tZ').value = currentP.z.toFixed(3);
+                
+                logToConsole('CMD', `JOG JOINT: ${joint.toUpperCase()}`);
+            });
+        }
     }
 });

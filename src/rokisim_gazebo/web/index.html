@@ -129,6 +129,64 @@ ORTAM:
 <div id="ik_status">SYS: IDLE</div>
 </div>
 
+<div class="panel panel-jog-group" style="border-top: 3px solid #f39c12; margin-top: 15px;">
+    <h3 style="color: #f39c12;">[CTRL] GRUP JOGLAMA (TEACH PENDANT)</h3>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="flex: 1; background: #111; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+            <div style="color: #3498db; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">CARTESIAN (XYZ)</div>
+            <div style="display: flex; justify-content: space-between; gap: 5px;">
+                <button id="jog_x_m" class="jog-btn" style="background:#2980b9; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-X</button>
+                <button id="jog_x_p" class="jog-btn" style="background:#2980b9; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+X</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                <button id="jog_y_m" class="jog-btn" style="background:#27ae60; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-Y</button>
+                <button id="jog_y_p" class="jog-btn" style="background:#27ae60; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+Y</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                <button id="jog_z_m" class="jog-btn" style="background:#8e44ad; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-Z</button>
+                <button id="jog_z_p" class="jog-btn" style="background:#8e44ad; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+Z</button>
+            </div>
+        </div>
+
+        <div style="flex: 1; background: #111; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+            <div style="color: #e67e22; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">JOINT (EKSEN)</div>
+            <div style="display: flex; justify-content: space-between; gap: 5px;">
+                <button id="jog_j1_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J1</button>
+                <button id="jog_j1_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J1</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                <button id="jog_j2_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J2</button>
+                <button id="jog_j2_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J2</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; gap: 5px; margin-top: 5px;">
+                <button id="jog_j3_m" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">-J3</button>
+                <button id="jog_j3_p" class="jog-btn" style="background:#d35400; color:white; border:none; padding:5px; border-radius:3px; flex:1; cursor:pointer;">+J3</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-dh" style="border-top: 3px solid #f1c40f; margin-top: 15px;">
+    <h3 style="color: #f1c40f;">[MATH] DENAVIT-HARTENBERG (DH) TABLOSU</h3>
+    <table style="width:100%; color:#fff; font-family:'Consolas',monospace; font-size:11px; text-align:center; border-collapse:collapse;">
+        <tr style="background:#333; color:#f1c40f; border-bottom: 2px solid #555;">
+            <th style="padding: 5px;">İ (Link)</th>
+            <th>θ (Theta)</th>
+            <th>d (mm)</th>
+            <th>a (mm)</th>
+            <th>α (Alpha)</th>
+        </tr>
+        <tr id="dh_row_1" style="transition: background 0.2s;"><td style="padding: 4px;">1 (Base)</td><td id="dh_t1">0.0°</td><td>330</td><td>50</td><td>-90°</td></tr>
+        <tr id="dh_row_2" style="transition: background 0.2s;"><td style="padding: 4px;">2 (Shldr)</td><td id="dh_t2">0.0°</td><td>0</td><td>330</td><td>0°</td></tr>
+        <tr id="dh_row_3" style="transition: background 0.2s;"><td style="padding: 4px;">3 (Elbow)</td><td id="dh_t3">0.0°</td><td>0</td><td>35</td><td>-90°</td></tr>
+        <tr id="dh_row_4" style="transition: background 0.2s;"><td style="padding: 4px;">4 (Wrst1)</td><td id="dh_t4">0.0°</td><td>335</td><td>0</td><td>90°</td></tr>
+        <tr id="dh_row_5" style="transition: background 0.2s;"><td style="padding: 4px;">5 (Wrst2)</td><td id="dh_t5">0.0°</td><td>0</td><td>0</td><td>-90°</td></tr>
+        <tr id="dh_row_6" style="transition: background 0.2s;"><td style="padding: 4px;">6 (Flange)</td><td id="dh_t6">0.0°</td><td>80</td><td>0</td><td>0°</td></tr>
+    </table>
+    <div style="font-size: 9px; color: #888; text-align: right; margin-top: 5px;">* Değerler FANUC LR Mate 200iD referansıdır.</div>
+</div>
+
 <div class="panel panel-joy">
 <h3 style="color: #e74c3c;">[CTRL] Analog Override</h3>
 <div class="joystick-wrapper">
