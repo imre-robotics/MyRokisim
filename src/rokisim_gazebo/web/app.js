@@ -75,8 +75,15 @@ function initDigitalTwin() {
     orbitCtrl = new THREE.OrbitControls(camera3d, renderer.domElement);
     orbitCtrl.enableDamping = true;
     orbitCtrl.dampingFactor = 0.05;
-    orbitCtrl.target.set(0, 0, 0.42);
-    camera3d.position.set(0.35, -0.7, 1.1);
+    // Kameranın odak noktasını robotun tam bel hizasına (J2-J3 arasına) alıyoruz
+    orbitCtrl.target.set(0, 0, 0.35); 
+    
+    // Kamerayı çaprazdan, robota tam hakim olacak bir mesafeye (çapraz üst) çekiyoruz
+    camera3d.position.set(1.2, -1.2, 0.9); 
+    
+    // Kameranın lense giren görüntüsünü anında güncelle
+    camera3d.lookAt(orbitCtrl.target);
+    orbitCtrl.update();
     camera3d.lookAt(orbitCtrl.target);
     orbitCtrl.update();
 
