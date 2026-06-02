@@ -715,20 +715,88 @@ statusText.style.color = "#e74c3c";
 aiToggle.disabled = true; // Kamerası yoksa AI butonunu kapat
 });
 
-// =========================================================
-// ANALOG JOYSTICK MANTIĞI
-// =========================================================
-const joyZone = document.getElementById('joyZone'); const joyKnob = document.getElementById('joyKnob');
-let isDragging = false; let joyDX = 0, joyDY = 0;
 
-joyKnob.addEventListener('pointerdown', (e) => { isDragging = true; joyKnob.setPointerCapture(e.pointerId); joyKnob.style.transition = 'none'; });
-joyKnob.addEventListener('pointerup', (e) => { isDragging = false; joyKnob.releasePointerCapture(e.pointerId); joyKnob.style.transition = 'transform 0.1s ease'; joyKnob.style.transform = `translate(0px, 0px)`; joyDX = 0; joyDY = 0; });
-joyKnob.addEventListener('pointermove', (e) => {
-if(!isDragging) return;
-let rect = joyZone.getBoundingClientRect(); let x = e.clientX - (rect.left + rect.width/2); let y = e.clientY - (rect.top + rect.height/2);
-let dist = Math.sqrt(x*x + y*y); if(dist > 30) { x = (x/dist) * 30; y = (y/dist) * 30; }
-joyKnob.style.transform = `translate(${x}px, ${y}px)`; joyDX = x / 30; joyDY = y / 30; 
-});
+
+
+// =========================================================
+// [MOD-TRIPLE-JOYSTICK] 6 EKSEN (6-DOF) ANALOG KONTROL
+// =========================================================
+
+// Ortak bir Joystick yaratıcı fonksiyon (Kod kalabalığını önlemek için)
+function setupJoystick(zoneId, knobId) {
+    const zone = document.getElementById(zoneId);
+    const knob = document.getElementById(knobId);
+    let state = { isDragging: false, dx: 0, dy: 0 };
+
+    if (zone && knob) {
+        knob.addEventListener('pointerdown', (e) => { 
+            state.isDragging = true; 
+            knob.setPointerCapture(e.pointerId); 
+            knob.style.transition = 'none'; 
+        });
+        knob.addEventListener('pointerup', (e) => { 
+            state.isDragging = false; 
+            knob.releasePointerCapture(e.pointerId); 
+            knob.style.transition = 'transform 0.1s ease'; 
+            knob.style.transform = `translate(0px, 0px)`; 
+            state.dx = 0; state.dy = 0; 
+        });
+        knob.addEventListener('pointermove', (e) => {
+            if(!state.isDragging) return;
+            let rect = zone.getBoundingClientRect(); 
+            let x = e.clientX - (rect.left + rect.width/2); 
+            let y = e.clientY - (rect.top + rect.height/2);
+            let dist = Math.sqrt(x*x + y*y); 
+            if(dist > 30) { x = (x/dist) * 30; y = (y/dist) * 30; }
+            knob.style.transform = `translate(${x}px, ${y}px)`; 
+            state.dx = x / 30; state.dy = y / 30; 
+        });
+    }
+    return state;
+}
+
+// 3 Joystick'i de sisteme tanımla
+const joy1 = setupJoystick('joyZone', 'joyKnob');     // Mavi: J1, J2
+const joy2 = setupJoystick('joyZone2', 'joyKnob2');   // Yeşil: J3, J4
+const joy3 = setupJoystick('joyZone3', 'joyKnob3');   // Mor: J5, J6
+
+// --- TRIPLE MOTOR AKTARMA DÖNGÜSÜ ---
+setInterval(() => {
+    let speedMultiplier = 0.03; // Hız/Hassasiyet ayarı
+    let changed = false;
+
+    // 1. JOYSTICK (Mavi): J1 (Base) ve J2 (Shoulder)
+    if (joy1.isDragging && (joy1.dx !== 0 || joy1.dy !== 0)) {
+        angles.j1 -= joy1.dx * speedMultiplier; 
+        angles.j2 -= joy1.dy * speedMultiplier;
+        angles.j1 = Math.max(-Math.PI, Math.min(Math.PI, angles.j1));
+        angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
+        changed = true;
+    }
+
+    // 2. JOYSTICK (Yeşil): J3 (Elbow) ve J4 (Wrist 1)
+    if (joy2.isDragging && (joy2.dx !== 0 || joy2.dy !== 0)) {
+        angles.j3 -= joy2.dy * speedMultiplier; // Yukarı/Aşağı iterse dirsek
+        angles.j4 += joy2.dx * speedMultiplier; // Sağa/Sola iterse bilek dönüşü
+        angles.j3 = Math.max(-Math.PI, Math.min(Math.PI, angles.j3));
+        angles.j4 = Math.max(-Math.PI, Math.min(Math.PI, angles.j4));
+        changed = true;
+    }
+
+    // 3. JOYSTICK (Mor): J5 (Wrist 2) ve J6 (Flange)
+    if (joy3.isDragging && (joy3.dx !== 0 || joy3.dy !== 0)) {
+        angles.j5 -= joy3.dy * speedMultiplier; // Yukarı/Aşağı iterse bilek eğilmesi
+        angles.j6 += joy3.dx * speedMultiplier; // Sağa/Sola iterse kafa/flanş dönüşü
+        angles.j5 = Math.max(-Math.PI, Math.min(Math.PI, angles.j5));
+        angles.j6 = Math.max(-Math.PI, Math.min(Math.PI, angles.j6));
+        changed = true;
+    }
+
+    // Eğer herhangi bir joystick oynatıldıysa panelleri güncelle
+    if (changed) {
+        syncControlValues();
+    }
+}, 30);
 
 
 
@@ -870,44 +938,81 @@ const cmdBtn = document.getElementById('cmd_btn');
 const cmdInput = document.getElementById('cmd_input');
 const memoryMap = { "küp": new THREE.Vector3(0.5, 0.4, 0.1), "daire": new THREE.Vector3(0.5, -0.4, 0.1), "silindir": new THREE.Vector3(0.0, 0.6, 0.1), "koni": new THREE.Vector3(0.0, -0.6, 0.1) };
 
-function lockOnTarget(commandText, isVoice = false) {
-if(!commandText) return;
-statusText.innerText = (isVoice ? "🎙️ DUYULDU: " : "⌨️ KOMUT: ") + commandText.toUpperCase();
-statusText.style.color = "#3498db";
-let commandProcessed = false;
+// 🛠️ YUMUŞATILMIŞ ASİSTAN BEYNİ (ASYNC)
+async function lockOnTarget(commandText, isVoice = false) {
+    if(!commandText) return;
+    statusText.innerText = (isVoice ? "🎙️ DUYULDU: " : "⌨️ KOMUT: ") + commandText.toUpperCase();
+    statusText.style.color = "#3498db";
+    let commandProcessed = false;
 
-if (commandText.match(/uç|üç|işlevci|işlemci|kıskaç|el|tutucu|kavrama/)) {
-if (commandText.match(/aç|bırak|sal/)) { angles.grip = 0.0; statusText.innerText = "🛠️ UÇ İŞLEVCİ: AÇILDI"; speakStatus("End effector opened."); commandProcessed = true; } 
-else if (commandText.match(/kapat|tut|sık|al/)) { angles.grip = 0.125; statusText.innerText = "🛠️ UÇ İŞLEVCİ: KAPATILDI"; speakStatus("End effector closed."); commandProcessed = true; }
-if(commandProcessed) { document.getElementById('grip_s').value = angles.grip; document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm'; return; }
+    // 1. KISKAÇ KONTROLÜ (Anında çalışır)
+    if (commandText.match(/uç|üç|işlevci|işlemci|kıskaç|el|tutucu|kavrama/)) {
+        if (commandText.match(/aç|bırak|sal/)) { angles.grip = 0.0; statusText.innerText = "🛠️ UÇ İŞLEVCİ: AÇILDI"; speakStatus("End effector opened."); commandProcessed = true; } 
+        else if (commandText.match(/kapat|tut|sık|al/)) { angles.grip = 0.125; statusText.innerText = "🛠️ UÇ İŞLEVCİ: KAPATILDI"; speakStatus("End effector closed."); commandProcessed = true; }
+        if(commandProcessed) { 
+            document.getElementById('grip_s').value = angles.grip; 
+            document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm'; 
+            return; 
+        }
+    }
+
+    // 2. AÇISAL HAREKET - EKSEN DÖNÜŞLERİ (Yumuşatıldı)
+    const dereceMatch = commandText.match(/(\d+)\s*derece/); 
+    if (dereceMatch) {
+        let derece = parseInt(dereceMatch[1]); let radyan = derece * (Math.PI / 180);
+        let targetAngles = { ...angles }; // O anki açıları kopyala
+
+        if (commandText.includes("sağ")) { targetAngles.j1 -= radyan; statusText.innerText = `🔄 TABAN: SAĞA ${derece}°`; speakStatus(`Base turning right by ${derece} degrees.`); commandProcessed = true; } 
+        else if (commandText.includes("sol")) { targetAngles.j1 += radyan; statusText.innerText = `🔄 TABAN: SOLA ${derece}°`; speakStatus(`Base turning left by ${derece} degrees.`); commandProcessed = true; } 
+        else if (commandText.includes("yukarı")) { targetAngles.j2 -= radyan; statusText.innerText = `🔄 GÖVDE: YUKARI ${derece}°`; speakStatus(`Shoulder pitching up by ${derece} degrees.`); commandProcessed = true; } 
+        else if (commandText.includes("aşağı")) { targetAngles.j2 += radyan; statusText.innerText = `🔄 GÖVDE: AŞAĞI ${derece}°`; speakStatus(`Shoulder pitching down by ${derece} degrees.`); commandProcessed = true; }
+
+        if (commandProcessed) {
+            targetAngles.j1 = Math.max(-Math.PI, Math.min(Math.PI, targetAngles.j1)); 
+            targetAngles.j2 = Math.max(-1.57, Math.min(1.57, targetAngles.j2));
+            document.getElementById('ai_toggle').checked = false; 
+            
+            // Işınlanmak yerine S-Eğrisi motorunu kullan!
+            await smoothJointMoveTo(targetAngles); 
+            return; 
+        }
+    }
+
+    // 3. KARTEZYEN KOORDİNAT HAREKETİ - OBJE HEDEFLERİ (Yumuşatıldı)
+    for (const [objectName, targetCoords] of Object.entries(memoryMap)) {
+        if (commandText.includes(objectName)) {
+            statusText.innerText = "🚀 HEDEF: " + objectName.toUpperCase(); statusText.style.color = "#e67e22";
+            speakStatus(`${objectName} hedefine yöneliyorum.`); 
+            document.getElementById('ai_toggle').checked = false; 
+            
+            // Işınlanmak yerine Kartezyen çizgi çizme motorunu kullan!
+            await smoothMoveTo(targetCoords.x, targetCoords.y, targetCoords.z); 
+            commandProcessed = true; break;
+        }
+    }
+
+    if(!commandProcessed) { statusText.innerText = "❌ KOMUT ANLAŞILAMADI"; statusText.style.color = "#e74c3c"; speakStatus("Command not recognized. Please repeat."); }
 }
 
-const dereceMatch = commandText.match(/(\d+)\s*derece/); 
-if (dereceMatch) {
-let derece = parseInt(dereceMatch[1]); let radyan = derece * (Math.PI / 180);
-if (commandText.includes("sağ")) { angles.j1 -= radyan; statusText.innerText = `🔄 TABAN: SAĞA ${derece}°`; speakStatus(`Base turning right by ${derece} degrees.`); commandProcessed = true; } 
-else if (commandText.includes("sol")) { angles.j1 += radyan; statusText.innerText = `🔄 TABAN: SOLA ${derece}°`; speakStatus(`Base turning left by ${derece} degrees.`); commandProcessed = true; } 
-else if (commandText.includes("yukarı")) { angles.j2 -= radyan; statusText.innerText = `🔄 GÖVDE: YUKARI ${derece}°`; speakStatus(`Shoulder pitching up by ${derece} degrees.`); commandProcessed = true; } 
-else if (commandText.includes("aşağı")) { angles.j2 += radyan; statusText.innerText = `🔄 GÖVDE: AŞAĞI ${derece}°`; speakStatus(`Shoulder pitching down by ${derece} degrees.`); commandProcessed = true; }
+// =========================================================
+// [MOD-TERMINAL] YAZILI KOMUT GİRİŞİ (Buton ve Enter Tuşu)
+// =========================================================
+if (cmdBtn && cmdInput) {
+    // 1. "SEND" Butonuna tıklandığında çalıştır
+    cmdBtn.addEventListener('click', async () => {
+        if(cmdInput.value.trim() !== "") {
+            await lockOnTarget(cmdInput.value.trim().toLowerCase(), false);
+            cmdInput.value = ""; // Gönderdikten sonra kutuyu temizle
+        }
+    });
 
-if (commandProcessed) {
-angles.j1 = Math.max(-Math.PI, Math.min(Math.PI, angles.j1)); angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2));
-document.getElementById('j1_s').value = angles.j1; document.getElementById('v1').innerText = (angles.j1 * 180/Math.PI).toFixed(2) + '°';
-document.getElementById('j2_s').value = angles.j2; document.getElementById('v2').innerText = (angles.j2 * 180/Math.PI).toFixed(2) + '°';
-document.getElementById('ai_toggle').checked = false; return; 
-}
-}
-
-for (const [objectName, targetCoords] of Object.entries(memoryMap)) {
-if (commandText.includes(objectName)) {
-statusText.innerText = "🚀 HEDEF: " + objectName.toUpperCase(); statusText.style.color = "#e67e22";
-speakStatus(`${objectName} hedefine yöneliyorum.`); 
-document.getElementById('tX').value = targetCoords.x.toFixed(3); document.getElementById('tY').value = targetCoords.y.toFixed(3); document.getElementById('tZ').value = targetCoords.z.toFixed(3);
-document.getElementById('ai_toggle').checked = false; solveIK(); commandProcessed = true; break;
-}
-}
-
-if(!commandProcessed) { statusText.innerText = "❌ KOMUT ANLAŞILAMADI"; statusText.style.color = "#e74c3c"; speakStatus("Command not recognized. Please repeat."); }
+    // 2. Klavyeden "Enter" tuşuna basıldığında çalıştır
+    cmdInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter' && cmdInput.value.trim() !== "") {
+            await lockOnTarget(cmdInput.value.trim().toLowerCase(), false);
+            cmdInput.value = ""; // Gönderdikten sonra kutuyu temizle
+        }
+    });
 }
 
 // =========================================================
@@ -1071,27 +1176,61 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
         // 🛠️ YUMUŞATILMIŞ HAREKET MOTORU (Titreşim Korumalı)
         let isMoving = false; // Sistem kilidi
 
-        async function smoothMoveTo(targetX, targetY, targetZ) {
-            if (isMoving) return; // Robot zaten hareket ediyorsa yeni tıklamaları reddet
+        // 🛠️ YUMUŞATILMIŞ EKSEN (JOINT) HAREKET MOTORU
+        async function smoothJointMoveTo(targetA) {
+            if (isMoving) return; 
             isMoving = true;
 
-            // Başlangıç noktasını kutulardan değil, robotun gerçek konumundan al!
+            let startA = { ...angles };
+            let steps = 40; // 40 adımda yumuşak geçiş
+            
+            for(let i = 1; i <= steps; i++) {
+                let t = i / steps;
+                
+                // Her bir motoru kendi başlangıç açısından hedef açısına yavaşça kaydır
+                ['j1', 'j2', 'j3', 'j4', 'j5', 'j6'].forEach(k => {
+                    angles[k] = startA[k] + (targetA[k] - startA[k]) * t;
+                });
+                
+                syncControlValues(); // Slider'ları ve arayüzü güncelle
+                
+                // Uç işlevcinin (TCP) anlık nerede olduğunu hesaplayıp IK kutularına yaz ki sistem senkron kalsın
+                let currentP = getEndEffectorPos(angles);
+                let txEl = document.getElementById('tX');
+                if(txEl) {
+                    txEl.value = currentP.x.toFixed(3);
+                    document.getElementById('tY').value = currentP.y.toFixed(3);
+                    document.getElementById('tZ').value = currentP.z.toFixed(3);
+                }
+                
+                await delay(15); 
+            }
+            isMoving = false;
+        }
+
+        // 🛠️ YUMUŞATILMIŞ KARTEZYEN (XYZ) HAREKET MOTORU
+        async function smoothMoveTo(targetX, targetY, targetZ) {
+            if (isMoving) return; 
+            isMoving = true;
+
+            // Başlangıç noktasını robotun gerçek fiziksel konumundan al
             let currentP = getEndEffectorPos(angles);
             let startX = currentP.x;
             let startY = currentP.y;
             let startZ = currentP.z;
             
-            let steps = 30; // Joglama daha seri hissettirsin diye 50'den 30'a düşürdük
+            let steps = 30; // 30 adımda lineer yumuşak geçiş
             for(let i = 1; i <= steps; i++) {
                 let t = i / steps;
+                // Hedef IK kutularını adım adım doldur
                 document.getElementById('tX').value = (startX + (targetX - startX) * t).toFixed(3);
                 document.getElementById('tY').value = (startY + (targetY - startY) * t).toFixed(3);
                 document.getElementById('tZ').value = (startZ + (targetZ - startZ) * t).toFixed(3);
                 
-                solveIK(); 
-                await delay(15); // Hızı biraz artırdık (daha akıcı)
+                solveIK(); // Ters kinematiği her adımda tetikle
+                await delay(15); 
             }
-            isMoving = false; // Hareket bitince kilidi aç
+            isMoving = false; 
         }
 
         // 4. Endüstriyel Macro Script Çözücü
@@ -1126,14 +1265,15 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
                         await delay(500);
                     }
                     // HOME POZİSYONUNA YUMUŞAK DÖNÜŞ
+                    // HOME POZİSYONUNA YUMUŞAK DÖNÜŞ (GÜNCELLENDİ)
                     else if (cmd[0] === 'HOME') {
                         logToConsole('INFO', 'HOME pozisyonuna dönülüyor...');
-                        await smoothMoveTo(0.3, 0.0, 0.4); 
-                        ['j1','j2','j3','j4','j5','j6'].forEach(k => angles[k] = 0);
-                        syncControlValues();
+                        // Senin sistemine ait güvenli varsayılan HOME açıları
+                        let homeAngles = { j1: 0, j2: -0.45, j3: 1.20, j4: 0.20, j5: 0.35, j6: 0 };
+                        await smoothJointMoveTo(homeAngles); 
+                        
                         angles.grip = 0.03;
-                        document.getElementById('grip_s').value = angles.grip;
-                        document.getElementById('grip_v').innerText = (angles.grip * 1000).toFixed(2) + ' mm';
+                        syncControlValues();
                     }
                     else {
                         logToConsole('ERR', `Tanımsız Komut: ${cmd[0]}`);
@@ -1203,33 +1343,28 @@ micBtn.innerText = "❌ DESTEKLENMİYOR"; micBtn.disabled = true;
 
 
 
-        document.getElementById('home_btn').addEventListener('click', async () => {
-            if (typeof isPlaying !== 'undefined' && isPlaying) document.getElementById('play_btn').click();
-            
-            logToConsole('INFO', 'SİSTEM: HOME POZİSYONUNA DÖNÜŞ BAŞLATILDI.');
-            speakStatus("Returning to home position.");
-
-            // 1. Önce robotu fiziksel koordinat (X=0.3, Y=0.0, Z=0.4) noktasına süzerek götür
-            await smoothMoveTo(0.3, 0.0, 0.4); 
-            
-            // 2. Şimdi tüm eklemleri (Joints) yazılımsal olarak 0'a çek
-            // (J2'yi -0.45, J3'ü 1.20 gibi başlangıçta kullandığın varsayılan değerlere set edebilirsin)
-            angles.j1 = 0;
-            angles.j2 = -0.45; // senin varsayılan J2 açın
-            angles.j3 = 1.20;  // senin varsayılan J3 açın
-            angles.j4 = 0;
-            angles.j5 = 0;
-            angles.j6 = 0;
-            angles.grip = 0.03;
-
-            // 3. Hesaplamayı tazele
-            solveIK();
-            
-            // 4. Arayüzü güncelle
-            syncControlValues();
-            
-            logToConsole('INFO', 'Robot güvenli HOME pozisyonuna ulaştı.');
-            speakStatus("Robot at home.");
+        // Düğmeyi DOM yüklendikten sonra zorla bağla
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const homeBtn = document.getElementById('home_btn');
+            if (homeBtn) {
+                // Eski event listener'ların üstüne binmemesi için kopyalayıp yeniliyoruz (Deep Clean)
+                let newHomeBtn = homeBtn.cloneNode(true);
+                homeBtn.parentNode.replaceChild(newHomeBtn, homeBtn);
+                
+                newHomeBtn.addEventListener('click', async () => {
+                    if(isMoving) return; // Zaten hareket ediyorsa komutu yoksay
+                    logToConsole('INFO', 'SİSTEM: HOME KOMUTU ALINDI.');
+                    speakStatus("Robot returning to safe home position.");
+                    
+                    // Tüm motorları yumuşakça güvenli konuma sür
+                    let homeAngles = { j1: 0, j2: -0.45, j3: 1.20, j4: 0.20, j5: 0.35, j6: 0 };
+                    await smoothJointMoveTo(homeAngles);
+                    
+                    angles.grip = 0.03;
+                    syncControlValues();
+                    logToConsole('INFO', 'Robot güvenli HOME pozisyonuna ulaştı.');
+                });
+            }
         });
 
 
@@ -1393,4 +1528,121 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    
 });
+
+// =========================================================
+// [MOD-TOUR] İNTERAKTİF OPERATÖR EĞİTİM TURU (GENİŞLETİLMİŞ)
+// =========================================================
+const tourSteps = [
+    { selector: '#center-panel', title: '1. DİJİTAL İKİZ (MERKEZ)', desc: 'Burası robotun kalbidir. Robotun fiziksel hareketlerini, çalışma alanını ve limitlerini gerçek zamanlı olarak 3 boyutlu izleyebilirsin. Kamerayı sağ tuşla kaydırabilir, sol tuşla döndürebilirsin.' },
+    { selector: '#start_ar_btn', title: '2. ARTIRILMIŞ GERÇEKLİK (AR)', desc: 'Tablet veya telefonundan giriyorsan, bu butona basarak dijital ikizi gerçek dünyaya, masanın üzerine indirebilir ve orada çalıştırabilirsin.' },
+    { selector: '.panel-ai', title: '3. YAPAY ZEKA (BİLGİSAYARLI GÖRÜ)', desc: 'Kameranı açarak ellerini tarar. Sağ elinle kıskacı açıp kapatabilir, sol elinle robotun bilek ve omuz yönünü tayin edebilirsin. Ayrıca sesli komutlar (Jarvis) buradan yönetilir.' },
+    { selector: '.panel-math', title: '4. ANLIK TELEMETRİ', desc: 'Robotun uç işlevcisinin (TCP) uzaydaki X, Y, Z koordinatlarını ve Roll, Pitch, Yaw açılarını milisaniyelik hassasiyetle okur.' },
+    { selector: '#console_btn', title: '5. GÖREV DİZİSİ (ROKISCRIPT)', desc: 'Mor butona tıkladığında açılan pencereye (GOTO, WAIT, GRIP) komutları yazarak robotu otonom bir fabrika döngüsüne sokabilirsin.' },
+    { selector: '.panel-ik', title: '6. TERS KİNEMATİK (IK)', desc: 'Robotun uzayda gitmesini istediğin hedef koordinatları (X, Y, Z) buraya girip EXECUTE JOG dediğinde, robot oraya gitmek için tüm motor açılarını kendisi hesaplar.' },
+    { selector: '.panel-jog-group', title: '7. ENDÜSTRİYEL GRUP JOGLAMA', desc: 'Gerçek bir CNC veya Robot operatörü gibi robotu Kartezyen (dümdüz X-Y-Z çizgilerinde) veya Joint (sadece belirli bir eksende) milim milim hareket ettirmeni sağlar.' },
+    { selector: '.panel-dh', title: '8. DENAVIT-HARTENBERG TABLOSU', desc: 'Robotik biliminin temelidir. Robotun anlık kinematik matris değerlerini (Theta, d, a, Alpha) gösterir. Hangi motor hareket ediyorsa o satır aktifleşir.' },
+    { selector: '.panel-joy', title: '9. ANALOG OVERRIDE (JOYSTICK)', desc: 'Özellikle dokunmatik ekranlarda veya fareyle robotu tıpkı bir oyun konsolu gibi manuel ve akıcı sürmeni sağlayan analog kontrolcüdür.' },
+    { selector: '#pos_btn', title: '10. GRAFİKSEL ANALİZLER', desc: 'Bu butonlara basarak Konum (Derece), Tork (Motor Yükü) ve TCP Hız (m/s) grafiklerini canlı olarak izleyebilirsin.' },
+    { selector: '#export_csv_btn', title: '11. DATA LOGGER (CSV İHRACATI)', desc: 'Sistem her hareketin kaydını tutar. Deneylerin bittiğinde bu butona basarak tüm 6 eksen telemetri verisini veri bilimi analizi için Excel (.CSV) formatında indirebilirsin.' },
+    { selector: '#axes_btn', title: '12. KİNEMATİK EKSENLER', desc: 'Robotun her bir ekleminin dönüş (Z) ve ofset (X) eksenlerini 3 boyutlu mavi/kırmızı oklar halinde modelin üzerinde görünür kılar.' },
+    { selector: '#workspace_btn', title: '13. ÇALIŞMA UZAYI KÜRESİ', desc: 'Robotun kolunun maksimum uzanabileceği fiziksel sınırı (Workspace) mavi bir küre olarak çizer. Güvenlik sınırlarını görmeni sağlar.' },
+    { selector: '#home_btn', title: '14. GÜVENLİ SIFIRLAMA (HOME)', desc: 'Sistem kilitlendiğinde veya işin bittiğinde, tüm eksenleri yumuşak bir S-eğrisi ile güvenli bekleme pozisyonuna geri çeker.' },
+    { selector: '#rec_btn', title: '15. TEACH PENDANT (ÖĞRET / TEKRARLA)', desc: 'REC tuşuna basıp robotu hareket ettirirsen, geçtiğin tüm yolları kaydeder. PLAY tuşuna bastığında bu rotayı birebir ve otonom olarak tekrar eder.' },
+    { selector: '.panel-jog', title: '16. BAĞIMSIZ MOTOR TESTİ', desc: 'Her bir servo motoru (J1\'den J6\'ya kadar) birbirinden bağımsız olarak kaydırıp tek tek test edebileceğin bakım panelidir.' },
+    { selector: '.panel-grip', title: '17. UÇ İŞLEVCİ KONTROLÜ', desc: 'Robotun ucundaki kıskacın (Gripper) ağız açıklığını buradan milimetrik olarak ayarlayabilirsin.' }
+];
+
+let currentTourStep = -1;
+let isTourActive = false;
+
+const tourBtn = document.getElementById('tour_btn');
+const tourOverlay = document.getElementById('tour_overlay');
+const tourHighlight = document.getElementById('tour_highlight');
+const tourTooltip = document.getElementById('tour_tooltip');
+const tourNextBtn = document.getElementById('tour_next_btn');
+
+function updateTourStep() {
+    if (currentTourStep >= tourSteps.length) {
+        endTour();
+        return;
+    }
+
+    const step = tourSteps[currentTourStep];
+    // id yerine selector kullanıyoruz ki HTML sınıflarını (class) da bulabilelim
+    const targetEl = document.querySelector(step.selector); 
+    
+    if (targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+        
+        tourHighlight.style.display = 'block';
+        tourHighlight.style.top = (rect.top - 8) + 'px';
+        tourHighlight.style.left = (rect.left - 8) + 'px';
+        tourHighlight.style.width = (rect.width + 16) + 'px';
+        tourHighlight.style.height = (rect.height + 16) + 'px';
+
+        tourTooltip.style.display = 'block';
+        tourTooltip.style.top = '50%';
+        tourTooltip.style.left = '50%';
+        tourTooltip.style.transform = 'translate(-50%, -50%)';
+
+        document.getElementById('tour_title').innerText = step.title;
+        document.getElementById('tour_desc').innerText = step.desc;
+
+        if (currentTourStep === tourSteps.length - 1) {
+            tourNextBtn.innerText = "Turu Bitir ✔️";
+            tourNextBtn.style.background = "#e74c3c";
+        } else {
+            tourNextBtn.innerText = "Sonraki Adım ➡️";
+            tourNextBtn.style.background = "#27ae60";
+        }
+        
+        if(typeof speakStatus === 'function') speakStatus("Showing " + step.title);
+    } else {
+        // Eğer arayüzde o paneli bulamazsa hata vermeden bir sonrakine atlasın
+        currentTourStep++;
+        updateTourStep();
+    }
+}
+
+function startTour() {
+    isTourActive = true;
+    currentTourStep = 0;
+    tourBtn.innerText = "❌ TURU BİTİR";
+    tourBtn.style.background = "#e74c3c";
+    tourOverlay.style.display = 'block';
+    
+    // Sağ ve Sol panelin scrollbar'ını en başa al ki kutular sapmasın
+    document.getElementById('left-panel').scrollTop = 0;
+    document.getElementById('right-panel').scrollTop = 0;
+
+    updateTourStep();
+    if(typeof speakStatus === 'function') speakStatus("System orientation tour initiated.");
+}
+
+function endTour() {
+    isTourActive = false;
+    currentTourStep = -1;
+    tourBtn.innerText = "❓ YARDIM (TOUR)";
+    tourBtn.style.background = "#3498db";
+    tourOverlay.style.display = 'none';
+    tourHighlight.style.display = 'none';
+    tourTooltip.style.display = 'none';
+    if(typeof speakStatus === 'function') speakStatus("Tour completed.");
+}
+
+if (tourBtn) {
+    tourBtn.addEventListener('click', () => {
+        if (isTourActive) endTour();
+        else startTour();
+    });
+}
+
+if (tourNextBtn) {
+    tourNextBtn.addEventListener('click', () => {
+        currentTourStep++;
+        updateTourStep();
+    });
+}
