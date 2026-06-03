@@ -1470,8 +1470,8 @@ const jogStepXYZ = 0.02; // Kartezyen adım (2 cm)
 const jogStepJoint = 0.05; // Eksen adımı (yaklaşık 2.8 derece)
 
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Kartezyen (XYZ) Joglama Bağlantıları
-    // 1. Kartezyen (XYZ) Joglama Bağlantıları
+    
+    // 1. Kartezyen (XYZ) Joglama Bağlantıları (Tıklamalı ve Yumuşak Süzülme)
     const jogMapXYZ = {
         'jog_x_p': { axis: 'tX', dir: 1 }, 'jog_x_m': { axis: 'tX', dir: -1 },
         'jog_y_p': { axis: 'tY', dir: 1 }, 'jog_y_m': { axis: 'tY', dir: -1 },
@@ -1503,33 +1503,56 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 2. Joint (Eksen) Joglama Bağlantıları
-    const jogMapJoint = {
-        'jog_j1_p': { j: 'j1', dir: 1 }, 'jog_j1_m': { j: 'j1', dir: -1 },
-        'jog_j2_p': { j: 'j2', dir: 1 }, 'jog_j2_m': { j: 'j2', dir: -1 },
-        'jog_j3_p': { j: 'j3', dir: 1 }, 'jog_j3_m': { j: 'j3', dir: -1 }
-    };
+    // 2. Joint (Eksen) Joglama Bağlantıları - 6 EKSEN VE BASILI TUTMA DESTEKLİ
+    function setupJointJog(btnId, jointKey, dir) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
 
-    for (let btnId in jogMapJoint) {
-        let btn = document.getElementById(btnId);
-        if(btn) {
-            btn.addEventListener('click', () => {
-                let joint = jogMapJoint[btnId].j;
-                angles[joint] += jogStepJoint * jogMapJoint[btnId].dir;
-                syncControlValues(); // Arayüzdeki sliderları güncelle
+        let jogInterval;
+        
+        const startJog = (e) => {
+            // Tablette ve farede basılı tutma olayını yakala
+            if (e.pointerId) btn.setPointerCapture(e.pointerId);
+            if (jogInterval) clearInterval(jogInterval);
+            
+            // Basılı tutulduğu sürece motoru çalıştır (Saniyede ~33 kare)
+            jogInterval = setInterval(() => {
+                angles[jointKey] += (jogStepJoint * dir * 0.5); // Hızı biraz yumuşattık
                 
-                // İleri kinematik ile TCP (hedef) kutularını eşitle
+                // Mekanik Limitleri koru (Robot kendini kırmasın)
+                angles[jointKey] = Math.max(-Math.PI, Math.min(Math.PI, angles[jointKey]));
+                syncControlValues(); // Arayüzdeki sliderları anında güncelle
+                
+                // İleri kinematik ile TCP (hedef) kutularını eşitle ki sistem senkron kalsın
                 let currentP = getEndEffectorPos(angles);
-                document.getElementById('tX').value = currentP.x.toFixed(3);
-                document.getElementById('tY').value = currentP.y.toFixed(3);
-                document.getElementById('tZ').value = currentP.z.toFixed(3);
-                
-                logToConsole('CMD', `JOG JOINT: ${joint.toUpperCase()}`);
-            });
-        }
+                let txEl = document.getElementById('tX');
+                if (txEl) {
+                    txEl.value = currentP.x.toFixed(3);
+                    document.getElementById('tY').value = currentP.y.toFixed(3);
+                    document.getElementById('tZ').value = currentP.z.toFixed(3);
+                }
+            }, 30);
+        };
+
+        const stopJog = (e) => {
+            if (e && e.pointerId) btn.releasePointerCapture(e.pointerId);
+            if (jogInterval) clearInterval(jogInterval);
+        };
+
+        // Pointer eventleri sayesinde hem fare hem dokunmatik ekran kusursuz çalışır
+        btn.addEventListener('pointerdown', startJog);
+        btn.addEventListener('pointerup', stopJog);
+        btn.addEventListener('pointerleave', stopJog);
+        btn.addEventListener('pointercancel', stopJog);
     }
 
-    
+    // J1'den J6'ya tüm butonları (Artı ve Eksi yönleriyle) tek satırda bağla
+    const joints = ['j1', 'j2', 'j3', 'j4', 'j5', 'j6'];
+    joints.forEach(j => {
+        setupJointJog(`jog_${j}_p`, j, 1);
+        setupJointJog(`jog_${j}_m`, j, -1);
+    });
+
 });
 
 // =========================================================
