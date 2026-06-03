@@ -18,6 +18,7 @@ window.ARButton = ARButton;
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="styles.css">
+<script src="/socket.io/socket.io.js"></script>
 
 </head>
 <body>
@@ -84,6 +85,17 @@ window.ARButton = ARButton;
             <button id="console_btn" style="background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: 2px solid #5e3370; padding: 12px; cursor: pointer; font-family: 'Consolas', monospace; font-weight: bold; width: 100%; border-radius: 4px; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.4); text-transform: uppercase; letter-spacing: 2px; transition: 0.2s;">
                 💻 SİSTEM LOGLARI VE GÖREV DİZİSİ (SCRIPT) AÇ
             </button>
+        </div>
+
+        <div class="panel panel-ai" style="border-color: #2980b9;">
+            <h3 style="color: #3498db;">[SYS] ENDÜSTRİYEL AĞ (OPC UA)</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <input type="text" id="opc_url" value="opc.tcp://127.0.0.1:4840" style="background: #111; border: 1px solid #333; color: #00ff99; padding: 8px; font-family: 'Consolas'; font-size: 11px; border-radius: 3px;" placeholder="opc.tcp://192.168.0.10:4840">
+                <div style="display: flex; gap: 5px;">
+                    <button id="opc_connect_btn" style="flex: 1; background: #2980b9; color: white; border: none; padding: 8px; border-radius: 3px; cursor: pointer; font-weight: bold;">🔗 BAĞLAN</button>
+                    <div id="opc_status_indicator" style="flex: 1; background: #2c3e50; color: #bdc3c7; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'Consolas'; font-weight: bold; border-radius: 3px;">🔴 OFFLINE</div>
+                </div>
+            </div>
         </div>
 
         <div class="panel panel-ik">

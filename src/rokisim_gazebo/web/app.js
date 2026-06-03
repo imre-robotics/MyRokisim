@@ -874,6 +874,61 @@ voiceReady = true;
 }
 
 // =========================================================
+// [MOD-OPC-UA] ENDÜSTRİYEL HABERLEŞME KÖPRÜSÜ
+// =========================================================
+const socket = io(); // Sunucu ile WebSocket bağlantısını başlat
+
+window.addEventListener('DOMContentLoaded', () => {
+    const opcBtn = document.getElementById('opc_connect_btn');
+    const opcUrlInput = document.getElementById('opc_url');
+    const opcStatusEl = document.getElementById('opc_status_indicator');
+
+    if (opcBtn && opcUrlInput && opcStatusEl) {
+        // BAĞLAN BUTONUNA TIKLANDIĞINDA
+        opcBtn.addEventListener('click', () => {
+            const url = opcUrlInput.value.trim();
+            if (url !== "") {
+                opcStatusEl.innerText = "⏳ BEKLENIYOR...";
+                opcStatusEl.style.color = "#f1c40f";
+                socket.emit('connectOPC', url);
+                logToConsole('INFO', `OPC UA Bağlantı isteği gönderildi: ${url}`);
+                speakStatus("Initiating industrial OPC UA connection.");
+            }
+        });
+
+        // SUNUCUDAN BAĞLANTI DURUMU GELDİĞİNDE
+        socket.on('opcStatus', (status) => {
+            if (status === 'ONLINE') {
+                opcStatusEl.innerText = "🟢 ONLINE";
+                opcStatusEl.style.color = "#2ecc71";
+                opcStatusEl.style.background = "#145a32";
+                logToConsole('SYS', 'OPC UA BAĞLANTISI BAŞARILI!');
+                speakStatus("OPC UA connection established. Real-time telemetry active.");
+            } else {
+                opcStatusEl.innerText = "🔴 OFFLINE";
+                opcStatusEl.style.color = "#e74c3c";
+                opcStatusEl.style.background = "#2c3e50";
+                logToConsole('ERR', 'OPC UA BAĞLANTI HATASI!');
+                speakStatus("Error. OPC UA connection failed.");
+            }
+        });
+    }
+});
+
+// ARAYÜZDEKİ MOTOR VERİLERİNİ SÜREKLİ OLARAK SUNUCUYA (PLC'YE) GÖNDER
+setInterval(() => {
+    // Saniyede 10 kez (100ms) mevcut motor açılarını Socket.IO ile arka plana fırlat
+    socket.emit('telemetry', {
+        j1: angles.j1,
+        j2: angles.j2,
+        j3: angles.j3,
+        j4: angles.j4,
+        j5: angles.j5,
+        j6: angles.j6
+    });
+}, 100);
+
+// =========================================================
 // [MOD-TEACH] ÖĞRET VE TEKRARLA + HAYALET YÖRÜNGE MOTORU
 // =========================================================
 const recBtn = document.getElementById('rec_btn');

@@ -5,12 +5,24 @@
   "name": "rokisim_ws",
   "version": "1.0.0",
   "main": "main.js",
-  "dependencies": {},
   "scripts": {
     "start": "electron ."
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "description": "RoKiSim desktop control pendant with ROS2/Gazebo integration and local 3D visualization."
+  "description": "RoKiSim desktop control pendant with ROS2/Gazebo integration and local 3D visualization.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imre-robotics/MyRokisim.git"
+  },
+  "bugs": {
+    "url": "https://github.com/imre-robotics/MyRokisim/issues"
+  },
+  "homepage": "https://github.com/imre-robotics/MyRokisim#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "node-opcua": "^2.173.1",
+    "socket.io": "^4.8.3"
+  }
 }
