@@ -669,31 +669,33 @@ const landmarks = results.multiHandLandmarks[i];
 const handLabel = results.multiHandedness[i].label; 
 
 if (handLabel === 'Left') {
-let target_j1 = (0.5 - landmarks[0].x) * 3.14; 
-let target_j2 = (landmarks[0].y - 0.5) * 2.0;
-let target_j3 = (landmarks[8].y - landmarks[5].y) * 5.0; 
-let target_j4 = (landmarks[12].y - landmarks[9].y) * 5.0;
-let target_j5 = (landmarks[16].y - landmarks[13].y) * 5.0;
+            let target_j1 = (0.5 - landmarks[0].x) * 3.14; 
+            let target_j2 = (landmarks[0].y - 0.5) * 2.0;
+            let target_j3 = (landmarks[8].y - landmarks[5].y) * 5.0; 
+            let target_j4 = (landmarks[12].y - landmarks[9].y) * 5.0;
+            let target_j5 = (landmarks[16].y - landmarks[13].y) * 5.0;
 
-angles.j1 += (target_j1 - angles.j1) * 0.15; 
-angles.j2 += (target_j2 - angles.j2) * 0.15;
-angles.j3 += (target_j3 - angles.j3) * 0.15; 
-angles.j4 += (target_j4 - angles.j4) * 0.15; 
-angles.j5 += (target_j5 - angles.j5) * 0.15;
-angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2)); 
-angles.j3 = Math.max(-2.5, Math.min(2.5, angles.j3));
-}
+            // 🚨 DEĞİŞECEK KISIM: 0.15'leri 0.03 (Ağır Çelik Kol Hissiyatı) yapıyoruz
+            angles.j1 += (target_j1 - angles.j1) * 0.03; 
+            angles.j2 += (target_j2 - angles.j2) * 0.03;
+            angles.j3 += (target_j3 - angles.j3) * 0.03; 
+            angles.j4 += (target_j4 - angles.j4) * 0.03; 
+            angles.j5 += (target_j5 - angles.j5) * 0.03;
+            angles.j2 = Math.max(-1.57, Math.min(1.57, angles.j2)); 
+            angles.j3 = Math.max(-2.5, Math.min(2.5, angles.j3));
+        }
 
-if (handLabel === 'Right') {
-let pinchDist = Math.hypot(landmarks[8].x - landmarks[4].x, landmarks[8].y - landmarks[4].y);
-let target_grip = 0.0;
-if (pinchDist < 0.05) target_grip = 0.125; 
-else if (pinchDist > 0.15) target_grip = 0.0;
-else target_grip = 0.125 - ((pinchDist - 0.05) / 0.10) * 0.125;
+        if (handLabel === 'Right') {
+            let pinchDist = Math.hypot(landmarks[8].x - landmarks[4].x, landmarks[8].y - landmarks[4].y);
+            let target_grip = 0.0;
+            if (pinchDist < 0.05) target_grip = 0.125; 
+            else if (pinchDist > 0.15) target_grip = 0.0;
+            else target_grip = 0.125 - ((pinchDist - 0.05) / 0.10) * 0.125;
 
-angles.grip += (target_grip - angles.grip) * 0.2;
-angles.grip = Math.max(0.0, Math.min(0.125, angles.grip));
-}
+            // 🚨 DEĞİŞECEK KISIM: Uç işlevci (Gripper) için de 0.2'yi 0.05 yapıyoruz
+            angles.grip += (target_grip - angles.grip) * 0.05;
+            angles.grip = Math.max(0.0, Math.min(0.125, angles.grip));
+        }
 }
 
 ['j1','j2','j3','j4','j5'].forEach((k, idx) => { document.getElementById(k+'_s').value = angles[k]; document.getElementById('v'+(idx+1)).innerText = (angles[k] * 180/Math.PI).toFixed(2) + '°'; });
